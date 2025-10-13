@@ -1,0 +1,10 @@
+# dart_frog.yaml
+
+# The port to run the server on.
+port: 8080
+
+# The number of isolates to run.
+# isolateCount: 1
+
+# The hostname to serve on.
+# host: localhost
