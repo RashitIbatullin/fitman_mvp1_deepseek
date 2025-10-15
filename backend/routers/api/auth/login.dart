@@ -26,8 +26,7 @@ Future<Response> _handleLogin(RequestContext context) async {
 
     // Поиск пользователя
     final result = await Database.connection.execute(
-      'SELECT * FROM users WHERE email = @email AND archived_at IS NULL',
-      parameters: {'email': email},
+    "SELECT * FROM users WHERE email = '$email' AND archived_at IS NULL",
     );
 
     if (result.isEmpty) {

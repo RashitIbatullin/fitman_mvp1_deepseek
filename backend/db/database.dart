@@ -4,17 +4,22 @@ class Database {
   static late Connection _connection;
 
   static Future<void> initialize() async {
-    // Создаем Endpoint для подключения
     final endpoint = Endpoint(
       host: 'localhost',
       port: 5432,
-      database: 'fitman_db',
+      database: 'fitman_mvp1_deepseek',
       username: 'fitman_user',
-      password: 'fitman_password',
+      password: 'fitman',
     );
 
-    // Открываем соединение через статический метод
-    _connection = await Connection.open(endpoint);
+    final connectionSettings = ConnectionSettings(
+      sslMode: SslMode.disable,
+    );
+
+    _connection = await Connection.open(
+      endpoint,
+      settings: connectionSettings,
+    );
 
     print('✅ Connected to PostgreSQL database');
     await _runMigrations();
@@ -109,7 +114,7 @@ class Database {
         calories_out REAL,
         measured_at TIMESTAMP DEFAULT NOW(),
         created_at TIMESTAMP DEFAULT NOW(),
-        company_id BIGINT DEFAULT -1
+        company_id BIGIT DEFAULT -1
       )
     ''');
 
@@ -180,17 +185,13 @@ class Database {
       VALUES ('client@fitman.ru', 'client123', 'Алексей', 'Клиентов', 'client')
     ''');
 
-    // Создаем тестовые планы тренировок
+    // Создаем тестовые планы тренировок - БЕЗ ПАРАМЕТРОВ для простоты
     await _connection.execute('''
       INSERT INTO training_plan_templates (name, description, goal, level, exercises, created_by)
       VALUES 
-      ('Похудение для начинающих', 'Базовые упражнения для снижения веса', 'weight_loss', 'beginner', @exercises1, @trainerId),
-      ('Набор мышечной массы', 'Силовые тренировки для роста мышц', 'muscle_gain', 'intermediate', @exercises2, @trainerId)
-    ''', parameters: {
-      'exercises1': '{"exercises": [{"name": "Бег", "duration": 30}, {"name": "Приседания", "reps": 15}]}',
-      'exercises2': '{"exercises": [{"name": "Жим лежа", "reps": 10}, {"name": "Становая тяга", "reps": 8}]}',
-      'trainerId': trainerId,
-    });
+      ('Похудение для начинающих', 'Базовые упражнения для снижения веса', 'weight_loss', 'beginner', '{"exercises": [{"name": "Бег", "duration": 30}, {"name": "Приседания", "reps": 15}]}', $trainerId),
+      ('Набор мышечной массы', 'Силовые тренировки для роста мышц', 'muscle_gain', 'intermediate', '{"exercises": [{"name": "Жим лежа", "reps": 10}, {"name": "Становая тяга", "reps": 8}]}', $trainerId)
+    ''');
 
     print('✅ Test data created successfully');
     print('👤 Test users:');

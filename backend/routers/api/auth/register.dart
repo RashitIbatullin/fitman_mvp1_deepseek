@@ -46,13 +46,6 @@ Future<Response> _handleRegister(RequestContext context) async {
       VALUES (@email, @passwordHash, @firstName, @lastName, @role)
       RETURNING id, email, first_name, last_name, role, created_at
       ''',
-      parameters: {
-        'email': email,
-        'passwordHash': password,
-        'firstName': firstName,
-        'lastName': lastName,
-        'role': role,
-      },
     );
 
     final user = result.first;

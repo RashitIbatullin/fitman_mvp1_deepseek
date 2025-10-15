@@ -1,76 +1,184 @@
+// user.dart
+
+class AuthResponse {
+  final String? token;
+  final User? user;
+  final String? message;
+  final bool success;
+
+  AuthResponse({
+    this.token,
+    this.user,
+    this.message,
+    this.success = false,
+  });
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    return AuthResponse(
+      token: _parseString(json['token']),
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      message: _parseString(json['message']),
+      success: json['success'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'token': token,
+      'user': user?.toJson(),
+      'message': message,
+      'success': success,
+    };
+  }
+
+  static String _parseString(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
+}
+
 class User {
-  final int id;
+  final String id;
   final String email;
-  final String firstName;
-  final String lastName;
+  final String name;
   final String? phone;
-  final String role;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final String? avatar;
 
   User({
     required this.id,
     required this.email,
-    required this.firstName,
-    required this.lastName,
+    required this.name,
     this.phone,
-    required this.role,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
+    this.avatar,
   });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: _parseString(json['id']),
+      email: _parseString(json['email']),
+      name: _parseString(json['name']),
+      phone: _parseString(json['phone']),
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
+      avatar: _parseString(json['avatar']),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'email': email,
-      'firstName': firstName,
-      'lastName': lastName,
+      'name': name,
       'phone': phone,
-      'role': role,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'avatar': avatar,
     };
   }
 
-  static User fromJson(Map<String, dynamic> json) {
+  User copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? phone,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? avatar,
+  }) {
     return User(
-      id: json['id'] as int,
-      email: json['email'] as String,
-      firstName: json['first_name'] as String,
-      lastName: json['last_name'] as String,
-      phone: json['phone'] as String?,
-      role: json['role'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      avatar: avatar ?? this.avatar,
     );
+  }
+
+  static String _parseString(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    return value.toString();
+  }
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 }
 
-class UserCreateRequest {
+// Дополнительные классы для работы с пользователями
+
+class LoginRequest {
   final String email;
   final String password;
-  final String firstName;
-  final String lastName;
-  final String? phone;
-  final String role;
 
-  UserCreateRequest({
+  LoginRequest({
     required this.email,
     required this.password,
-    required this.firstName,
-    required this.lastName,
-    this.phone,
-    required this.role,
   });
 
-  factory UserCreateRequest.fromJson(Map<String, dynamic> json) {
-    return UserCreateRequest(
-      email: json['email'] as String,
-      password: json['password'] as String,
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      phone: json['phone'] as String?,
-      role: json['role'] as String,
-    );
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'password': password,
+    };
+  }
+}
+
+class RegisterRequest {
+  final String email;
+  final String password;
+  final String name;
+  final String? phone;
+
+  RegisterRequest({
+    required this.email,
+    required this.password,
+    required this.name,
+    this.phone,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'password': password,
+      'name': name,
+      'phone': phone,
+    };
+  }
+}
+
+class UpdateProfileRequest {
+  final String? name;
+  final String? phone;
+  final String? avatar;
+
+  UpdateProfileRequest({
+    this.name,
+    this.phone,
+    this.avatar,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    if (name != null) data['name'] = name;
+    if (phone != null) data['phone'] = phone;
+    if (avatar != null) data['avatar'] = avatar;
+    return data;
   }
 }
