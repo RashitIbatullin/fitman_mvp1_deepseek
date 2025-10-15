@@ -1,4 +1,7 @@
 
+import 'package:fitman_app/providers/auth_provider.dart';
+import 'package:fitman_app/screens/admin_dashboard.dart';
+import 'package:fitman_app/screens/trainer_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,20 +18,39 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget  {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) { // Добавляем WidgetRef ref
+    final authState = ref.watch(authProvider);
+
     return MaterialApp(
-      title: 'Фитнес-менеджер',
+      title: 'Fitman MVP1',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
+      home: authState.when(
+        data: (user) {
+          if (user == null) {
+            return const LoginScreen();
+          }
+          // Автоматическая навигация по ролям
+          switch (user.role) {
+            case 'admin':
+              return const AdminDashboardScreen();
+            case 'trainer':
+              return const TrainerDashboardScreen();
+            default:
+              return const ClientDashboardScreen();
+          }
+        },
+        loading: () => const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, stack) => const LoginScreen(),
+      ),
     );
   }
 }

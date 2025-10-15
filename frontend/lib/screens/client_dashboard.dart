@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import 'login_screen.dart';
 import 'schedule_screen.dart';
 
 class ClientDashboardScreen extends ConsumerStatefulWidget {
@@ -63,8 +65,36 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
             onPressed: _refreshData,
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _handleLogout,
+            icon: Icon(Icons.logout),
+            onPressed: () async {
+              // Показываем подтверждение
+              final shouldLogout = await showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Выход'),
+                  content: Text('Вы уверены, что хотите выйти?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('Отмена'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text('Выйти'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldLogout == true) {
+                ref.read(authProvider.notifier).logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                      (route) => false,
+                );
+              }
+            },
           ),
         ],
       ),
@@ -380,10 +410,5 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
-  }
-
-  void _handleLogout() {
-    ApiService.clearToken();
-    Navigator.pushReplacementNamed(context, '/');
   }
 }
