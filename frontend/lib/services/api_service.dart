@@ -37,49 +37,132 @@ class ApiService {
 
   // Аутентификация
   static Future<AuthResponse> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/login'),
-      headers: _headers,
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return AuthResponse.fromJson(data);
-    } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Login failed');
+      print('=== LOGIN RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('=====================');
+
+      // ВРЕМЕННАЯ ЗАГЛУШКА ДЛЯ РАЗРАБОТКИ
+      // Если сервер возвращает только сообщение, создаем тестовые данные
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Проверяем, есть ли реальные данные
+        if (data['token'] == null) {
+          print('=== USING MOCK DATA ===');
+
+          // Создаем тестового пользователя
+          final mockUser = User(
+            id: 1,
+            email: email,
+            firstName: 'Test',
+            lastName: 'User',
+            role: _determineRole(email),
+          );
+
+          // Создаем mock токен
+          final mockToken = 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
+
+          return AuthResponse(
+            token: mockToken,
+            user: mockUser,
+          );
+        } else {
+          // Используем реальные данные если они есть
+          final token = data?['token']?.toString() ?? '';
+          final userData = data?['user'] ?? {};
+
+          if (token.isEmpty) {
+            throw Exception('No token received from server');
+          }
+
+          final user = User(
+            id: userData?['id'] ?? 1,
+            email: userData?['email']?.toString() ?? email,
+            firstName: userData?['firstName']?.toString() ?? userData?['first_name']?.toString() ?? 'User',
+            lastName: userData?['lastName']?.toString() ?? userData?['last_name']?.toString() ?? '',
+            phone: userData?['phone']?.toString(),
+            role: userData?['role']?.toString() ?? _determineRole(email),
+          );
+
+          return AuthResponse(token: token, user: user);
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData?['message'] ?? errorData?['error'] ?? 'Login failed');
+      }
+    } catch (e) {
+      print('Login error: $e');
+      rethrow;
     }
   }
 
-  static Future<AuthResponse> register(
-    String email, 
-    String password, 
-    String firstName, 
-    String lastName, 
-    String role,
-  ) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/register'),
-      headers: _headers,
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-        'firstName': firstName,
-        'lastName': lastName,
-        'role': role,
-      }),
-    );
+// Вспомогательный метод для определения роли по email
+  static String _determineRole(String email) {
+    if (email.contains('admin')) return 'admin';
+    if (email.contains('trainer')) return 'trainer';
+    return 'client';
+  }
 
-    if (response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      return AuthResponse.fromJson(data);
-    } else {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Registration failed');
+  static Future<AuthResponse> register(
+      String email,
+      String password,
+      String firstName,
+      String lastName,
+      String role,
+      ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/register'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'firstName': firstName,
+          'lastName': lastName,
+          'role': role,
+        }),
+      );
+
+      print('=== REGISTER RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('========================');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Всегда возвращаем либо mock данные, либо реальные
+        final token = data?['token']?.toString() ?? 'mock_jwt_token_register_${DateTime.now().millisecondsSinceEpoch}';
+        final userData = data?['user'] ?? {};
+
+        final user = User(
+          id: userData?['id'] ?? DateTime.now().millisecondsSinceEpoch,
+          email: userData?['email']?.toString() ?? email,
+          firstName: userData?['firstName']?.toString() ?? userData?['first_name']?.toString() ?? firstName,
+          lastName: userData?['lastName']?.toString() ?? userData?['last_name']?.toString() ?? lastName,
+          phone: userData?['phone']?.toString(),
+          role: userData?['role']?.toString() ?? role,
+        );
+
+        return AuthResponse(token: token, user: user);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData?['message'] ?? errorData?['error'] ?? 'Registration failed with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Register error: $e');
+      rethrow;
     }
   }
 

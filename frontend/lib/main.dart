@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,10 +8,10 @@ import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Инициализация API service
   await ApiService.init();
-  
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -49,9 +50,9 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     await Future.delayed(const Duration(seconds: 2)); // Имитация загрузки
-    
+
     if (mounted) {
       if (token != null) {
         Navigator.pushReplacement(

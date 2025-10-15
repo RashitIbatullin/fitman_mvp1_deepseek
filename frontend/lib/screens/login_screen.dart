@@ -52,7 +52,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.fitness_center,
+                Icons.sports_gymnastics,
                 size: 80,
                 color: Colors.blue,
               ),
