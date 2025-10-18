@@ -14,7 +14,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   // Загружаем сохраненного пользователя при инициализации
   Future<void> _loadStoredUser() async {
     try {
-      await ApiService.init();
       final token = await _getStoredToken();
       if (token != null) {
         final userData = await _getStoredUser();

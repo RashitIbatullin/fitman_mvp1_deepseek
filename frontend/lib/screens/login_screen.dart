@@ -1,6 +1,9 @@
+import 'package:fitman_app/screens/trainer_dashboard.dart';
+import 'package:fitman_app/screens/unknown_role_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import 'admin_dashboard.dart';
 import 'register_screen.dart';
 import 'client_dashboard.dart';
 
@@ -28,16 +31,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Редирект при успешной аутентификации
+    // Редирект при успешной аутентификации с учетом роли
     if (authState.hasValue && authState.value != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.pushReplacement(
+        final user = authState.value!;
+        Widget targetScreen;
+
+        switch (user.role) {
+          case 'admin':
+            targetScreen = const AdminDashboardScreen();
+            break;
+          case 'trainer':
+            targetScreen = const TrainerDashboardScreen();
+            break;
+          case 'client':
+            targetScreen = const ClientDashboardScreen();
+            break;
+          default:
+            targetScreen = const UnknownRoleScreen();
+        }
+
+        print('Redirecting to: ${user.role} dashboard');
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const ClientDashboardScreen()),
+          MaterialPageRoute(builder: (context) => targetScreen),
+              (route) => false,
         );
       });
     }
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Вход в систему'),

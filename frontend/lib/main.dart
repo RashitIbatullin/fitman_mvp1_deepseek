@@ -2,6 +2,7 @@
 import 'package:fitman_app/providers/auth_provider.dart';
 import 'package:fitman_app/screens/admin_dashboard.dart';
 import 'package:fitman_app/screens/trainer_dashboard.dart';
+import 'package:fitman_app/screens/unknown_role_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,12 @@ import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+
+  // Очищаем сохраненную аутентификацию при каждом запуске (для разработки)
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();
 
   // Инициализация API service
   await ApiService.init();
@@ -42,8 +49,10 @@ class MyApp extends ConsumerWidget  {
               return const AdminDashboardScreen();
             case 'trainer':
               return const TrainerDashboardScreen();
-            default:
+            case 'client':
               return const ClientDashboardScreen();
+            default:
+              return const UnknownRoleScreen();
           }
         },
         loading: () => const Scaffold(
