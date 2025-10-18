@@ -31,7 +31,7 @@ class DialogUtils {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
+            (route) => false,
       );
     }
   }

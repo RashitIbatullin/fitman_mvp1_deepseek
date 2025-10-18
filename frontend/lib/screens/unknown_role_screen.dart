@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-import 'login_screen.dart';
+import '../widgets/custom_app_bar.dart';
 
 class UnknownRoleScreen extends ConsumerWidget {
   const UnknownRoleScreen({super.key});
@@ -11,21 +11,9 @@ class UnknownRoleScreen extends ConsumerWidget {
     final user = ref.watch(authProvider).value;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Неизвестная роль'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authProvider.notifier).logout();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
+      appBar: CustomAppBar(
+        title: 'Неизвестная роль',
+        showLogout: true,
       ),
       body: Center(
         child: Padding(
@@ -65,18 +53,6 @@ class UnknownRoleScreen extends ConsumerWidget {
                 'Обратитесь к администратору для настройки прав доступа',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(authProvider.notifier).logout();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                },
-                child: const Text('Выйти и войти с другой ролью'),
               ),
             ],
           ),
