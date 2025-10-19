@@ -35,26 +35,79 @@ class ApiService {
     return headers;
   }
 
+  static String _determineRole(String email) {
+    if (email.contains('admin')) return 'admin';
+    if (email.contains('trainer')) return 'trainer';
+    return 'client';
+  }
+
   // Аутентификация
   static Future<AuthResponse> login(String email, String password) async {
     try {
-      // Используем mock бэкенд вместо реального API
-      final data = await MockBackend.login(email, password);
-      final user = User(
-        id: data['user']['id'],
-        email: data['user']['email'],
-        firstName: data['user']['firstName'],
-        lastName: data['user']['lastName'],
-        role: data['user']['role'],
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
       );
 
-      return AuthResponse(token: data['token'], user: user);
+      print('=== REAL LOGIN RESPONSE ===');
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      print('=====================');
 
+      // ВРЕМЕННО: Если сервер возвращает только сообщение, используем моки
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Проверяем, есть ли реальные данные
+        if (data['token'] == null && data['access_token'] == null) {
+          print('=== SERVER NOT READY - USING MOCK DATA ===');
+
+          await Future.delayed(const Duration(seconds: 1));
+
+          final mockUser = User(
+            id: 1,
+            email: email,
+            firstName: 'Test',
+            lastName: 'User',
+            role: _determineRole(email),
+          );
+
+          final mockToken = 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
+
+          return AuthResponse(token: mockToken, user: mockUser);
+        }
+
+        // Реальная логика если сервер возвращает данные
+        final token = data?['token']?.toString() ?? data?['access_token']?.toString() ?? '';
+        final userData = data?['user'] ?? {};
+
+        if (token.isEmpty) {
+          throw Exception('No token received from server');
+        }
+
+        final user = User(
+          id: userData?['id'] ?? 0,
+          email: userData?['email']?.toString() ?? email,
+          firstName: userData?['firstName']?.toString() ?? userData?['first_name']?.toString() ?? 'User',
+          lastName: userData?['lastName']?.toString() ?? userData?['last_name']?.toString() ?? '',
+          phone: userData?['phone']?.toString(),
+          role: userData?['role']?.toString() ?? _determineRole(email),
+        );
+
+        return AuthResponse(token: token, user: user);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData?['message'] ?? errorData?['error'] ?? 'Login failed with status ${response.statusCode}');
+      }
     } catch (e) {
       print('Login error: $e');
       rethrow;
+    }
   }
-}
 
   static Future<AuthResponse> register(
       String email,
@@ -76,7 +129,7 @@ class ApiService {
         }),
       );
 
-      print('=== REGISTER RESPONSE ===');
+      print('=== REAL REGISTER RESPONSE ===');
       print('Status Code: ${response.statusCode}');
       print('Response Body: ${response.body}');
       print('========================');
@@ -84,9 +137,32 @@ class ApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Всегда возвращаем либо mock данные, либо реальные
-        final token = data?['token']?.toString() ?? 'mock_jwt_token_register_${DateTime.now().millisecondsSinceEpoch}';
+        // ВРЕМЕННО: Если сервер не готов, используем моки
+        if (data['token'] == null && data['access_token'] == null) {
+          print('=== SERVER NOT READY - USING MOCK REGISTER DATA ===');
+
+          await Future.delayed(const Duration(seconds: 1));
+
+          final mockUser = User(
+            id: DateTime.now().millisecondsSinceEpoch,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            role: role,
+          );
+
+          final mockToken = 'mock_jwt_token_register_${DateTime.now().millisecondsSinceEpoch}';
+
+          return AuthResponse(token: mockToken, user: mockUser);
+        }
+
+        // Реальная логика
+        final token = data?['token']?.toString() ?? data?['access_token']?.toString() ?? '';
         final userData = data?['user'] ?? {};
+
+        if (token.isEmpty) {
+          throw Exception('No token received from server');
+        }
 
         final user = User(
           id: userData?['id'] ?? DateTime.now().millisecondsSinceEpoch,
@@ -108,7 +184,7 @@ class ApiService {
     }
   }
 
-  // Пользователи
+  // Остальные методы (getUsers, getTrainingPlans, etc.) без изменений
   static Future<List<User>> getUsers({String? role}) async {
     final url = role != null ? '$baseUrl/api/users?role=$role' : '$baseUrl/api/users';
     final response = await http.get(Uri.parse(url), headers: _headers);
@@ -122,7 +198,6 @@ class ApiService {
     }
   }
 
-  // Планы тренировок
   static Future<List<dynamic>> getTrainingPlans() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/training/plans'),
@@ -133,7 +208,6 @@ class ApiService {
       final data = jsonDecode(response.body);
       return data['plans'] as List;
     } else {
-      // Заглушка для демонстрации
       return [
         {
           'id': 1,
@@ -153,7 +227,6 @@ class ApiService {
     }
   }
 
-  // Расписание
   static Future<List<dynamic>> getSchedule() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/schedule'),
@@ -164,7 +237,6 @@ class ApiService {
       final data = jsonDecode(response.body);
       return data['schedule'] as List;
     } else {
-      // Заглушка для демонстрации
       return [
         {
           'id': 1,
@@ -178,7 +250,6 @@ class ApiService {
     }
   }
 
-  // Чат
   static Future<List<dynamic>> getChatMessages(int userId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/chat/messages/$userId'),
@@ -206,86 +277,5 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to send message');
     }
-  }
-}
-
-class MockBackend {
-  static final Map<String, dynamic> _users = {
-    'admin@fitman.ru': {
-      'id': 1,
-      'email': 'admin@fitman.ru',
-      'firstName': 'Админ',
-      'lastName': 'Системный',
-      'role': 'admin',
-      'password': 'admin123'
-    },
-    'trainer@fitman.ru': {
-      'id': 2,
-      'email': 'trainer@fitman.ru',
-      'firstName': 'Иван',
-      'lastName': 'Тренеров',
-      'role': 'trainer',
-      'password': 'trainer123'
-    },
-    'client@fitman.ru': {
-      'id': 3,
-      'email': 'client@fitman.ru',
-      'firstName': 'Анна',
-      'lastName': 'Клиентова',
-      'role': 'client',
-      'password': 'client123'
-    }
-  };
-
-  static Future<Map<String, dynamic>> login(String email, String password) async {
-    await Future.delayed(Duration(seconds: 1)); // Имитация задержки сети
-
-    final user = _users[email];
-    if (user == null || user['password'] != password) {
-      throw Exception('Invalid email or password');
-    }
-
-    return {
-      'token': 'mock_jwt_token_${user['id']}',
-      'user': {
-        'id': user['id'],
-        'email': user['email'],
-        'firstName': user['firstName'],
-        'lastName': user['lastName'],
-        'role': user['role']
-      }
-    };
-  }
-
-  static Future<Map<String, dynamic>> register(
-      String email, String password, String firstName, String lastName, String role
-      ) async {
-    await Future.delayed(Duration(seconds: 1));
-
-    if (_users.containsKey(email)) {
-      throw Exception('User already exists');
-    }
-
-    final newUser = {
-      'id': DateTime.now().millisecondsSinceEpoch,
-      'email': email,
-      'firstName': firstName,
-      'lastName': lastName,
-      'role': role,
-      'password': password
-    };
-
-    _users[email] = newUser;
-
-    return {
-      'token': 'mock_jwt_token_${newUser['id']}',
-      'user': {
-        'id': newUser['id'],
-        'email': newUser['email'],
-        'firstName': newUser['firstName'],
-        'lastName': newUser['lastName'],
-        'role': newUser['role']
-      }
-    };
   }
 }

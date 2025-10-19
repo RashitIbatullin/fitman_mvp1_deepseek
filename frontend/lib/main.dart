@@ -15,9 +15,9 @@ void main() async {
 
 
   // Очищаем сохраненную аутентификацию при каждом запуске (для разработки)
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.clear();
+//  WidgetsFlutterBinding.ensureInitialized();
+//  final prefs = await SharedPreferences.getInstance();
+//  await prefs.clear();
 
   // Инициализация API service
   await ApiService.init();
