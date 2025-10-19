@@ -43,7 +43,6 @@ class Database {
         password: 'postgres',
       );
 
-
       print('🔄 Connecting to PostgreSQL database...');
       // Открываем соединение через статический метод
       _connection = await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.disable));
@@ -105,9 +104,12 @@ class Database {
         WHERE email = @email
       ''';
 
-      final results = await conn.execute(sql, parameters: {
-        'email': email,
-      });
+      final results = await conn.execute(
+        Sql.named(sql),
+        parameters: {
+          'email': email,
+        },
+      );
 
       if (results.isEmpty) return null;
 
@@ -140,9 +142,12 @@ class Database {
         WHERE id = @id
       ''';
 
-      final results = await conn.execute(sql, parameters: {
-        'id': id,
-      });
+      final results = await conn.execute(
+        Sql.named(sql),
+        parameters: {
+          'id': id,
+        },
+      );
 
       if (results.isEmpty) return null;
 
@@ -175,16 +180,19 @@ class Database {
         RETURNING id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at
       ''';
 
-      final results = await conn.execute(sql, parameters: {
-        'email': user.email,
-        'password_hash': user.passwordHash,
-        'first_name': user.firstName,
-        'last_name': user.lastName,
-        'role': user.role,
-        'phone': user.phone,
-        'created_at': user.createdAt,
-        'updated_at': user.updatedAt,
-      });
+      final results = await conn.execute(
+        Sql.named(sql),
+        parameters: {
+          'email': user.email,
+          'password_hash': user.passwordHash,
+          'first_name': user.firstName,
+          'last_name': user.lastName,
+          'role': user.role,
+          'phone': user.phone,
+          'created_at': user.createdAt,
+          'updated_at': user.updatedAt,
+        },
+      );
 
       final row = results.first;
       return User.fromMap({
@@ -251,7 +259,10 @@ class Database {
         RETURNING id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at
       ''';
 
-      final results = await conn.execute(sql, parameters: updates);
+      final results = await conn.execute(
+        Sql.named(sql),
+        parameters: updates,
+      );
 
       if (results.isEmpty) return null;
 
@@ -284,9 +295,12 @@ class Database {
         RETURNING id
       ''';
 
-      final results = await conn.execute(sql, parameters: {
-        'id': id,
-      });
+      final results = await conn.execute(
+        Sql.named(sql),
+        parameters: {
+          'id': id,
+        },
+      );
 
       return results.isNotEmpty;
     } catch (e) {

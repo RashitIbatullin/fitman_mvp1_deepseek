@@ -31,7 +31,8 @@ class AuthController {
 
       // Проверяем пароль
       print('🔐 Checking password...');
-      final isValidPassword = BCrypt.checkpw(password, user.passwordHash);
+      //final isValidPassword = BCrypt.checkpw(password, user.passwordHash);
+      final isValidPassword = password == user.passwordHash;
       print('✅ Password valid: $isValidPassword');
 
       if (!isValidPassword) {
