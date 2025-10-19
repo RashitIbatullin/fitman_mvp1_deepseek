@@ -17,7 +17,6 @@ Middleware requireAuth() {
         return Response(401, body: '{"error": "Invalid or expired token"}');
       }
 
-      // Добавляем данные пользователя в request
       final updatedRequest = request.change(
           context: {'user': payload}
       );

@@ -21,7 +21,6 @@ class User {
     required this.updatedAt,
   });
 
-  // Для создания из данных БД
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
       id: map['id'] is int ? map['id'] : int.parse(map['id'].toString()),
@@ -53,13 +52,10 @@ class User {
     };
   }
 
-  // Убираем пароль из JSON для безопасности
   Map<String, dynamic> toSafeJson() {
-    final json = toJson();
-    return json; // passwordHash уже не включается в toJson()
+    return toJson();
   }
 
-  // Для обновления пользователя
   User copyWith({
     String? firstName,
     String? lastName,
@@ -75,6 +71,35 @@ class User {
       phone: phone ?? this.phone,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+    );
+  }
+}
+
+class CreateUserRequest {
+  final String email;
+  final String password;
+  final String firstName;
+  final String lastName;
+  final String role;
+  final String? phone;
+
+  CreateUserRequest({
+    required this.email,
+    required this.password,
+    required this.firstName,
+    required this.lastName,
+    required this.role,
+    this.phone,
+  });
+
+  factory CreateUserRequest.fromJson(Map<String, dynamic> json) {
+    return CreateUserRequest(
+      email: json['email'] as String,
+      password: json['password'] as String,
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      role: json['role'] as String,
+      phone: json['phone'] as String?,
     );
   }
 }
