@@ -4,7 +4,7 @@ import 'package:bcrypt/bcrypt.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import '../config/database.dart';
 import '../config/app_config.dart';
-import '../models/user.dart';
+import '../models/user_back.dart';
 
 class AuthController {
   static Future<Response> login(Request request) async {

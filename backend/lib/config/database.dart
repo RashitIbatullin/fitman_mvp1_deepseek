@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:postgres/postgres.dart';
 
-import '../models/user.dart';
+import '../models/user_back.dart';
 
 class Database {
   static final Database _instance = Database._internal();

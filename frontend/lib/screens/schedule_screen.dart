@@ -95,7 +95,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: _getStatusColor(session['status']).withOpacity(0.2),
+            color: _getStatusColor(session['status']).withAlpha(51), // ~20% opacity
             shape: BoxShape.circle,
           ),
           child: Icon(

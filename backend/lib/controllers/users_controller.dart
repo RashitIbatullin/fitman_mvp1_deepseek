@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:bcrypt/bcrypt.dart';
 import '../config/database.dart';
-import '../models/user.dart';
+import '../models/user_back.dart';
 
 class UsersController {
   // Получить всех пользователей (только для админа)

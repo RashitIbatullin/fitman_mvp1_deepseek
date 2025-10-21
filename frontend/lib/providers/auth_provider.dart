@@ -1,13 +1,12 @@
 import 'dart:convert';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart';
+import '../models/user_front.dart';
 import '../services/api_service.dart';
 
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
-  AuthNotifier() : super(const AsyncValue.data(null)) {
+  AuthNotifier() : super(const AsyncValue.loading()) {
     _loadStoredUser();
   }
 
@@ -19,10 +18,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
         final userData = await _getStoredUser();
         if (userData != null) {
           state = AsyncValue.data(userData);
+          return;
         }
       }
+      state = const AsyncValue.data(null);
     } catch (e) {
       print('Error loading stored user: $e');
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
@@ -36,12 +38,28 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     final userJson = prefs.getString('user_data');
     if (userJson != null) {
       final userData = jsonDecode(userJson);
+
       return User(
-        id: userData['id'] ?? 0,
-        email: userData['email'] ?? '',
-        firstName: userData['firstName'] ?? '',
-        lastName: userData['lastName'] ?? '',
-        role: userData['role'] ?? 'client',
+        id: userData['id'] is int ? userData['id'] : int.parse(userData['id'].toString()),
+        email: userData['email']?.toString() ?? '',
+        passwordHash: userData['passwordHash']?.toString() ?? '',
+        firstName: userData['firstName']?.toString() ?? '',
+        lastName: userData['lastName']?.toString() ?? '',
+        middleName: userData['middleName']?.toString(),
+        role: userData['role']?.toString() ?? 'client',
+        phone: userData['phone']?.toString(),
+        gender: userData['gender']?.toString(),
+        age: userData['age'] != null ? int.tryParse(userData['age'].toString()) : null,
+        sendNotification: userData['sendNotification']?.toString() == 'true',
+        hourNotification: userData['hourNotification'] != null ? int.tryParse(userData['hourNotification'].toString()) ?? 1 : 1,
+        trackCalories: userData['trackCalories']?.toString() == 'true',
+        coeffActivity: userData['coeffActivity'] != null ? double.tryParse(userData['coeffActivity'].toString()) ?? 1.2 : 1.2,
+        createdAt: userData['createdAt'] is DateTime
+            ? userData['createdAt']
+            : DateTime.parse(userData['createdAt']?.toString() ?? DateTime.now().toIso8601String()),
+        updatedAt: userData['updatedAt'] is DateTime
+            ? userData['updatedAt']
+            : DateTime.parse(userData['updatedAt']?.toString() ?? DateTime.now().toIso8601String()),
       );
     }
     return null;
@@ -53,20 +71,30 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       final authResponse = await ApiService.login(email, password);
       await ApiService.saveToken(authResponse.token);
 
-      // Сохраняем данные пользователя
+      // Сохраняем данные пользователя с ВСЕМИ полями
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode({
         'id': authResponse.user.id,
         'email': authResponse.user.email,
+        'passwordHash': authResponse.user.passwordHash,
         'firstName': authResponse.user.firstName,
         'lastName': authResponse.user.lastName,
+        'middleName': authResponse.user.middleName,
         'role': authResponse.user.role,
+        'phone': authResponse.user.phone,
+        'gender': authResponse.user.gender,
+        'age': authResponse.user.age,
+        'sendNotification': authResponse.user.sendNotification,
+        'hourNotification': authResponse.user.hourNotification,
+        'trackCalories': authResponse.user.trackCalories,
+        'coeffActivity': authResponse.user.coeffActivity,
+        'createdAt': authResponse.user.createdAt.toIso8601String(),
+        'updatedAt': authResponse.user.updatedAt.toIso8601String(),
       }));
 
       state = AsyncValue.data(authResponse.user);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
-      rethrow;
     }
   }
 
@@ -84,20 +112,30 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
       );
       await ApiService.saveToken(authResponse.token);
 
-      // Сохраняем данные пользователя
+      // Сохраняем данные пользователя с ВСЕМИ полями
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_data', jsonEncode({
         'id': authResponse.user.id,
         'email': authResponse.user.email,
+        'passwordHash': authResponse.user.passwordHash,
         'firstName': authResponse.user.firstName,
         'lastName': authResponse.user.lastName,
+        'middleName': authResponse.user.middleName,
         'role': authResponse.user.role,
+        'phone': authResponse.user.phone,
+        'gender': authResponse.user.gender,
+        'age': authResponse.user.age,
+        'sendNotification': authResponse.user.sendNotification,
+        'hourNotification': authResponse.user.hourNotification,
+        'trackCalories': authResponse.user.trackCalories,
+        'coeffActivity': authResponse.user.coeffActivity,
+        'createdAt': authResponse.user.createdAt.toIso8601String(),
+        'updatedAt': authResponse.user.updatedAt.toIso8601String(),
       }));
 
       state = AsyncValue.data(authResponse.user);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
-      rethrow;
     }
   }
 
