@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/schedule_item.dart';
 import '../models/user_front.dart';
 
 class ApiService {
@@ -283,6 +284,69 @@ class ApiService {
     }
   }
 
+  // Получение списка клиентов для инструктора
+  static Future<List<User>> getAssignedClientsForInstructor() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/instructor/clients'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned clients for instructor with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned clients for instructor error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение списка тренеров для инструктора
+  static Future<List<User>> getAssignedTrainersForInstructor() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/instructor/trainers'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned trainers for instructor with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned trainers for instructor error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение менеджера для инструктора
+  static Future<User> getAssignedManagerForInstructor() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/instructor/manager'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return User.fromJson(data);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned manager for instructor with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned manager for instructor error: $e');
+      rethrow;
+    }
+  }
+
   // Получение планов тренировок
   static Future<List<dynamic>> getTrainingPlans() async {
     final response = await http.get(
@@ -299,7 +363,7 @@ class ApiService {
   }
 
   // Получение расписания
-  static Future<List<dynamic>> getSchedule() async {
+  static Future<List<ScheduleItem>> getSchedule() async {
     final response = await http.get(
       Uri.parse('$baseUrl/api/schedule'),
       headers: _headers,
@@ -307,7 +371,8 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['schedule'] as List;
+      final scheduleList = data['schedule'] as List;
+      return scheduleList.map((item) => ScheduleItem.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load schedule with status ${response.statusCode}');
     }

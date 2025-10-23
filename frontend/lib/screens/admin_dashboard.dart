@@ -5,6 +5,7 @@ import '../widgets/custom_app_bar.dart';
 import 'admin/create_user_screen.dart';
 import 'admin/users_list_screen.dart';
 
+
 class AdminDashboard extends ConsumerWidget {
   const AdminDashboard({super.key});
 
@@ -41,6 +42,13 @@ class AdminDashboard extends ConsumerWidget {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              _navigateToCreateUser(context, 'instructor');
+            },
+            child: const Text('Инструктор'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
               _navigateToCreateUser(context, 'trainer');
             },
             child: const Text('Тренер'),
@@ -70,19 +78,49 @@ class AdminDashboard extends ConsumerWidget {
         title: 'Администратор: ${user?.firstName ?? ''}',
         additionalActions: [
           // Кнопка создания пользователя
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            tooltip: 'Создать пользователя',
+          AppBarAction(
+            icon: Icons.person_add,
+            label: 'Создать',
             onPressed: () => _showCreateUserDialog(context),
           ),
           // Кнопка списка пользователей
-          IconButton(
-            icon: const Icon(Icons.people),
-            tooltip: 'Список пользователей',
+          AppBarAction(
+            icon: Icons.people,
+            label: 'Пользователи',
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const UsersListScreen()),
+              );
+            },
+          ),
+          AppBarAction(
+            icon: Icons.assignment_ind,
+            label: 'Клиенты',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UsersListScreen(initialFilter: 'manager')),
+              );
+            },
+          ),
+          AppBarAction(
+            icon: Icons.assignment,
+            label: 'Инструкторы',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UsersListScreen(initialFilter: 'manager')),
+              );
+            },
+          ),
+          AppBarAction(
+            icon: Icons.assignment_turned_in,
+            label: 'Тренеры',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UsersListScreen(initialFilter: 'manager')),
               );
             },
           ),

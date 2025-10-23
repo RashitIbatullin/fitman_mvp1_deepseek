@@ -1,3 +1,4 @@
+import 'package:fitman_app/screens/instructor_dashboard.dart';
 import 'package:fitman_app/screens/trainer_dashboard.dart';
 import 'package:fitman_app/screens/unknown_role_screen.dart';
 import 'package:flutter/material.dart';
@@ -44,6 +45,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             break;
           case 'trainer':
             targetScreen = const TrainerDashboard();
+            break;
+          case 'instructor':
+            targetScreen = const InstructorDashboard();
             break;
           case 'client':
             targetScreen = const ClientDashboard();
@@ -181,6 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 runSpacing: 4,
                 children: [
                   _buildTestUserChip('admin@fitman.ru', 'admin123', 'Админ'),
+                  _buildTestUserChip('instructor@fitman.ru', 'instructor123', 'Инструктор'),
                   _buildTestUserChip('trainer@fitman.ru', 'trainer123', 'Тренер'),
                   _buildTestUserChip('manager@fitman.ru', 'manager123', 'Менеджер'),
                   _buildTestUserChip('client@fitman.ru', 'client123', 'Клиент'),

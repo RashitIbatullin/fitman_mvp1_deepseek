@@ -4,6 +4,7 @@ import 'package:fitman_app/screens/admin_dashboard.dart';
 import 'package:fitman_app/screens/trainer_dashboard.dart';
 import 'package:fitman_app/screens/unknown_role_screen.dart';
 import 'package:fitman_app/screens/manager_dashboard.dart';
+import 'package:fitman_app/screens/instructor_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,6 +53,8 @@ class MyApp extends ConsumerWidget  {
               return const ManagerDashboard();
             case 'trainer':
               return const TrainerDashboard();
+            case 'instructor':
+              return const InstructorDashboard();
             case 'client':
               return const ClientDashboard();
             default:

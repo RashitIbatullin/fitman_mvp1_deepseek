@@ -5,6 +5,7 @@ import '../controllers/users_controller.dart';
 import '../controllers/training_controller.dart';
 import '../controllers/schedule_controller.dart';
 import '../controllers/manager_controller.dart';
+import '../controllers/instructor_controller.dart';
 import '../middleware/auth_middleware.dart';
 
 // Создаем обертки для protected routes
@@ -56,6 +57,25 @@ Handler _managerHandler(Handler handler) {
   return requireAuth()(_requireManagerOrAdmin()(handler));
 }
 
+// Middleware для проверки роли 'instructor' или 'admin'
+Middleware _requireInstructorOrAdmin() {
+  return (Handler innerHandler) {
+    return (Request request) {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      final role = user?['role'] as String?;
+      if (user == null || (role != 'instructor' && role != 'admin')) {
+        return Response.forbidden('{"error": "Instructor or Admin access required"}');
+      }
+      return innerHandler(request);
+    };
+  };
+}
+
+Handler _instructorHandler(Handler handler) {
+  // Сначала аутентификация, потом проверка роли
+  return requireAuth()(_requireInstructorOrAdmin()(handler));
+}
+
 // Создаем и экспортируем роутер
 final Router router = Router()
 // Public routes
@@ -91,4 +111,9 @@ final Router router = Router()
   ..post('/api/managers/<id>/instructors', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignInstructors(req, id))(request))
   ..get('/api/managers/<id>/instructors/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedInstructorIds(req, id))(request))
   ..post('/api/managers/<id>/trainers', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignTrainers(req, id))(request))
-  ..get('/api/managers/<id>/trainers/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedTrainerIds(req, id))(request));
+  ..get('/api/managers/<id>/trainers/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedTrainerIds(req, id))(request))
+
+// Instructor routes
+  ..get('/api/instructor/clients', (Request request) => _instructorHandler(InstructorController.getAssignedClients)(request))
+  ..get('/api/instructor/trainers', (Request request) => _instructorHandler(InstructorController.getAssignedTrainers)(request))
+  ..get('/api/instructor/manager', (Request request) => _instructorHandler(InstructorController.getAssignedManager)(request));

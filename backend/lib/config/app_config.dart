@@ -19,7 +19,7 @@ class AppConfig {
   static const int minPasswordLength = 6;
   
   // Допустимые роли пользователей
-  static const List<String> allowedRoles = ['client', 'trainer', 'admin'];
+  static const List<String> allowedRoles = ['client', 'trainer', 'instructor', 'manager', 'admin'];
   
   // Настройки CORS
   static const List<String> allowedOrigins = [

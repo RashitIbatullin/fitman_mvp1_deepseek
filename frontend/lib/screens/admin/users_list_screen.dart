@@ -9,7 +9,8 @@ import 'assign_instructors_screen.dart';
 import 'assign_trainers_screen.dart';
 
 class UsersListScreen extends ConsumerStatefulWidget {
-  const UsersListScreen({super.key});
+  final String? initialFilter;
+  const UsersListScreen({super.key, this.initialFilter});
 
   @override
   ConsumerState<UsersListScreen> createState() => _UsersListScreenState();
@@ -24,6 +25,9 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialFilter != null) {
+      _selectedFilter = widget.initialFilter!;
+    }
     _loadUsers();
   }
 
@@ -50,6 +54,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
         return _users.where((user) => user.role == 'manager').toList();
       case 'trainer':
         return _users.where((user) => user.role == 'trainer').toList();
+      case 'instructor':
+        return _users.where((user) => user.role == 'instructor').toList();
       case 'client':
         return _users.where((user) => user.role == 'client').toList();
       default:
@@ -65,6 +71,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
         return 'Менеджер';
       case 'trainer':
         return 'Тренер';
+      case 'instructor':
+        return 'Инструктор';
       case 'client':
         return 'Клиент';
       default:

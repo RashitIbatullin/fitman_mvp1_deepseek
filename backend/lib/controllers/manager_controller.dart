@@ -42,7 +42,7 @@ class ManagerController {
         return Response.unauthorized('{"error": "Not authenticated"}');
       }
 
-      final managerId = userPayload['id'] as int?;
+      final managerId = userPayload['userId'] as int?;
       if (managerId == null) {
         return Response.badRequest(body: '{"error": "Invalid token payload"}');
       }
@@ -73,7 +73,7 @@ class ManagerController {
         return Response.unauthorized('{"error": "Not authenticated"}');
       }
 
-      final managerId = userPayload['id'] as int?;
+      final managerId = userPayload['userId'] as int?;
       if (managerId == null) {
         return Response.badRequest(body: '{"error": "Invalid token payload"}');
       }

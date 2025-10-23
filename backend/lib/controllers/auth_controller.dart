@@ -133,7 +133,7 @@ class AuthController {
       'role': user.role,
       'firstName': user.firstName,
       'lastName': user.lastName,
-      'exp': DateTime.now().add(Duration(hours: AppConfig.jwtExpiryHours)).millisecondsSinceEpoch,
+      'exp': (DateTime.now().add(Duration(hours: AppConfig.jwtExpiryHours)).millisecondsSinceEpoch / 1000).round(),
     });
 
     return jwt.sign(SecretKey(AppConfig.jwtSecret));

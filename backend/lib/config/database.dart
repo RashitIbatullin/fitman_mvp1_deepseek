@@ -514,6 +514,132 @@ class Database {
     }
   }
 
+  // Получить клиентов для инструктора
+  Future<List<User>> getClientsForInstructor(int instructorId) async {
+    try {
+      final conn = await connection;
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT u.* FROM users u
+          INNER JOIN instructor_clients ic ON u.id = ic.client_id
+          WHERE ic.instructor_id = @instructorId
+          ORDER BY u.last_name, u.first_name
+        '''),
+        parameters: {'instructorId': instructorId},
+      );
+      return results.map((row) => User.fromMap(row.toColumnMap())).toList();
+    } catch (e) {
+      print('❌ getClientsForInstructor error: $e');
+      rethrow;
+    }
+  }
+
+  // Получить тренеров для инструктора
+  Future<List<User>> getTrainersForInstructor(int instructorId) async {
+    try {
+      final conn = await connection;
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT DISTINCT t.* FROM users t 
+          INNER JOIN lessons l ON t.id = l.trainer_id 
+          WHERE l.instructor_id = @instructorId
+        '''),
+        parameters: {'instructorId': instructorId},
+      );
+      return results.map((row) => User.fromMap(row.toColumnMap())).toList();
+    } catch (e) {
+      print('❌ getTrainersForInstructor error: $e');
+      rethrow;
+    }
+  }
+
+  // Получить менеджера для инструктора
+  Future<User?> getManagerForInstructor(int instructorId) async {
+    try {
+      final conn = await connection;
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT u.* FROM users u 
+          INNER JOIN manager_instructors mi ON u.id = mi.manager_id 
+          WHERE mi.instructor_id = @instructorId
+        '''),
+        parameters: {'instructorId': instructorId},
+      );
+      if (results.isEmpty) return null;
+      return User.fromMap(results.first.toColumnMap());
+    } catch (e) {
+      print('❌ getManagerForInstructor error: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getScheduleForUser(int userId, String role) async {
+    try {
+      final conn = await connection;
+      String userColumn;
+      switch (role) {
+        case 'instructor':
+          userColumn = 'l.instructor_id';
+          break;
+        case 'trainer':
+          userColumn = 'l.trainer_id';
+          break;
+        case 'client':
+          userColumn = 'l.client_id';
+          break;
+        default:
+          return [];
+      }
+
+      final results = await conn.execute(
+        Sql.named('''
+          SELECT 
+            l.id,
+            tpt.name as training_plan_name,
+            l.start_plan_at as start_time,
+            l.finish_plan_at as end_time,
+            l.complete as status,
+            (SELECT u.first_name || \' \' || u.last_name FROM users u WHERE u.id = l.trainer_id) as trainer_name
+          FROM lessons l
+          LEFT JOIN client_training_plans ctp ON l.client_training_plan_id = ctp.id
+          LEFT JOIN training_plan_templates tpt ON ctp.training_plan_template_id = tpt.id
+          WHERE $userColumn = @userId
+          ORDER BY l.start_plan_at ASC
+        '''),
+        parameters: {'userId': userId},
+      );
+
+      return results.map((row) {
+        final rowMap = row.toColumnMap();
+        return {
+          'id': rowMap['id'],
+          'training_plan_name': rowMap['training_plan_name'] ?? 'Без названия',
+          'start_time': (rowMap['start_time'] as DateTime).toIso8601String(),
+          'end_time': (rowMap['end_time'] as DateTime).toIso8601String(),
+          'status': _statusToString(rowMap['status']),
+          'trainer_name': rowMap['trainer_name'] ?? 'Не назначен',
+        };
+      }).toList();
+    } catch (e) {
+      print('❌ getScheduleForUser error: $e');
+      rethrow;
+    }
+  }
+
+  String _statusToString(dynamic status) {
+    if (status is! int) return 'unknown';
+    switch (status) {
+      case 0:
+        return 'scheduled';
+      case 1:
+        return 'completed';
+      case 2:
+        return 'canceled';
+      default:
+        return 'unknown';
+    }
+  }
+
   // Инициализация базы данных (создание таблиц если не существуют)
   Future<void> initializeDatabase() async {
     try {
