@@ -220,6 +220,69 @@ class ApiService {
     }
   }
 
+  // Получение списка клиентов для менеджера
+  static Future<List<User>> getAssignedClients() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/manager/clients'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned clients with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned clients error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение списка инструкторов для менеджера
+  static Future<List<User>> getAssignedInstructors() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/manager/instructors'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned instructors with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned instructors error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение списка тренеров для менеджера
+  static Future<List<User>> getAssignedTrainers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/manager/trainers'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned trainers with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get assigned trainers error: $e');
+      rethrow;
+    }
+  }
+
   // Получение планов тренировок
   static Future<List<dynamic>> getTrainingPlans() async {
     final response = await http.get(
@@ -262,6 +325,126 @@ class ApiService {
       return data['messages'] as List;
     } else {
       throw Exception('Failed to load chat messages with status ${response.statusCode}');
+    }
+  }
+
+  // Получение ID клиентов, назначенных менеджеру
+  static Future<List<int>> getAssignedClientIds(int managerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/managers/$managerId/clients/ids'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<int>().toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned client IDs');
+      }
+    } catch (e) {
+      print('Get assigned client IDs error: $e');
+      rethrow;
+    }
+  }
+
+  // Назначение клиентов менеджеру
+  static Future<void> assignClientsToManager(int managerId, List<int> clientIds) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/managers/$managerId/clients'),
+        headers: _headers,
+        body: jsonEncode({'client_ids': clientIds}),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to assign clients');
+      }
+    } catch (e) {
+      print('Assign clients error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение ID инструкторов, назначенных менеджеру
+  static Future<List<int>> getAssignedInstructorIds(int managerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/managers/$managerId/instructors/ids'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<int>().toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned instructor IDs');
+      }
+    } catch (e) {
+      print('Get assigned instructor IDs error: $e');
+      rethrow;
+    }
+  }
+
+  // Назначение инструкторов менеджеру
+  static Future<void> assignInstructorsToManager(int managerId, List<int> instructorIds) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/managers/$managerId/instructors'),
+        headers: _headers,
+        body: jsonEncode({'instructor_ids': instructorIds}),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to assign instructors');
+      }
+    } catch (e) {
+      print('Assign instructors error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение ID тренеров, назначенных менеджеру
+  static Future<List<int>> getAssignedTrainerIds(int managerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/managers/$managerId/trainers/ids'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<int>().toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load assigned trainer IDs');
+      }
+    } catch (e) {
+      print('Get assigned trainer IDs error: $e');
+      rethrow;
+    }
+  }
+
+  // Назначение тренеров менеджеру
+  static Future<void> assignTrainersToManager(int managerId, List<int> trainerIds) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/managers/$managerId/trainers'),
+        headers: _headers,
+        body: jsonEncode({'trainer_ids': trainerIds}),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to assign trainers');
+      }
+    } catch (e) {
+      print('Assign trainers error: $e');
+      rethrow;
     }
   }
 

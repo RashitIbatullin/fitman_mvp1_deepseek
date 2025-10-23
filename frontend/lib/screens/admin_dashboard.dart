@@ -5,8 +5,8 @@ import '../widgets/custom_app_bar.dart';
 import 'admin/create_user_screen.dart';
 import 'admin/users_list_screen.dart';
 
-class AdminDashboardScreen extends ConsumerWidget {
-  const AdminDashboardScreen({super.key});
+class AdminDashboard extends ConsumerWidget {
+  const AdminDashboard({super.key});
 
   void _navigateToCreateUser(BuildContext context, String role) {
     Navigator.push(

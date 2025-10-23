@@ -4,6 +4,9 @@ import '../../models/user_front.dart';
 import '../../services/api_service.dart';
 import '../../widgets/custom_app_bar.dart';
 import 'create_user_screen.dart';
+import 'assign_clients_screen.dart';
+import 'assign_instructors_screen.dart';
+import 'assign_trainers_screen.dart';
 
 class UsersListScreen extends ConsumerStatefulWidget {
   const UsersListScreen({super.key});
@@ -43,6 +46,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     switch (_selectedFilter) {
       case 'admin':
         return _users.where((user) => user.role == 'admin').toList();
+      case 'manager':
+        return _users.where((user) => user.role == 'manager').toList();
       case 'trainer':
         return _users.where((user) => user.role == 'trainer').toList();
       case 'client':
@@ -56,6 +61,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     switch (role) {
       case 'admin':
         return 'Администратор';
+      case 'manager':
+        return 'Менеджер';
       case 'trainer':
         return 'Тренер';
       case 'client':
@@ -69,6 +76,8 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     switch (role) {
       case 'admin':
         return Colors.purple;
+      case 'manager':
+        return Colors.orange;
       case 'trainer':
         return Colors.green;
       case 'client':
@@ -93,6 +102,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
               segments: const [
                 ButtonSegment(value: 'all', label: Text('Все')),
                 ButtonSegment(value: 'admin', label: Text('Админы')),
+                ButtonSegment(value: 'manager', label: Text('Менеджеры')),
                 ButtonSegment(value: 'trainer', label: Text('Тренеры')),
                 ButtonSegment(value: 'client', label: Text('Клиенты')),
               ],
@@ -130,12 +140,56 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                                   ),
                                   title: Text(user.fullName),
                                   subtitle: Text(user.email),
-                                  trailing: Chip(
-                                    label: Text(
-                                      _getRoleDisplayName(user.role),
-                                      style: const TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor: _getRoleColor(user.role),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Chip(
+                                        label: Text(
+                                          _getRoleDisplayName(user.role),
+                                          style: const TextStyle(color: Colors.white),
+                                        ),
+                                        backgroundColor: _getRoleColor(user.role),
+                                      ),
+                                      if (user.role == 'manager') ...[
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.group_add),
+                                          tooltip: 'Назначить клиентов',
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AssignClientsScreen(manager: user),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.sports_kabaddi),
+                                          tooltip: 'Назначить инструкторов',
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AssignInstructorsScreen(manager: user),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.fitness_center),
+                                          tooltip: 'Назначить тренеров',
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AssignTrainersScreen(manager: user),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                   onTap: () {
                                     // Навигация к редактированию пользователя

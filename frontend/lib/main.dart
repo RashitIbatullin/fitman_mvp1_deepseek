@@ -3,6 +3,7 @@ import 'package:fitman_app/providers/auth_provider.dart';
 import 'package:fitman_app/screens/admin_dashboard.dart';
 import 'package:fitman_app/screens/trainer_dashboard.dart';
 import 'package:fitman_app/screens/unknown_role_screen.dart';
+import 'package:fitman_app/screens/manager_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,11 +47,13 @@ class MyApp extends ConsumerWidget  {
           // Автоматическая навигация по ролям
           switch (user.role) {
             case 'admin':
-              return const AdminDashboardScreen();
+              return const AdminDashboard();
+            case 'manager':
+              return const ManagerDashboard();
             case 'trainer':
-              return const TrainerDashboardScreen();
+              return const TrainerDashboard();
             case 'client':
-              return const ClientDashboardScreen();
+              return const ClientDashboard();
             default:
               return const UnknownRoleScreen();
           }
@@ -88,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (token != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ClientDashboardScreen()),
+          MaterialPageRoute(builder: (context) => const ClientDashboard()),
         );
       } else {
         Navigator.pushReplacement(

@@ -4,6 +4,7 @@ import '../controllers/auth_controller.dart';
 import '../controllers/users_controller.dart';
 import '../controllers/training_controller.dart';
 import '../controllers/schedule_controller.dart';
+import '../controllers/manager_controller.dart';
 import '../middleware/auth_middleware.dart';
 
 // Создаем обертки для protected routes
@@ -25,6 +26,20 @@ Middleware _requireTrainerOrAdmin() {
   };
 }
 
+// Middleware для проверки роли 'manager' или 'admin'
+Middleware _requireManagerOrAdmin() {
+  return (Handler innerHandler) {
+    return (Request request) {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      final role = user?['role'] as String?;
+      if (user == null || (role != 'manager' && role != 'admin')) {
+        return Response.forbidden('{"error": "Manager or Admin access required"}');
+      }
+      return innerHandler(request);
+    };
+  };
+}
+
 // Оборачиваем хендлеры в цепочку middleware
 Handler _adminHandler(Handler handler) {
   // Сначала аутентификация, потом проверка роли
@@ -34,6 +49,11 @@ Handler _adminHandler(Handler handler) {
 Handler _trainerHandler(Handler handler) {
   // Сначала аутентификация, потом проверка роли
   return requireAuth()(_requireTrainerOrAdmin()(handler));
+}
+
+Handler _managerHandler(Handler handler) {
+  // Сначала аутентификация, потом проверка роли
+  return requireAuth()(_requireManagerOrAdmin()(handler));
 }
 
 // Создаем и экспортируем роутер
@@ -60,4 +80,15 @@ final Router router = Router()
 
 // Schedule routes
   ..get('/api/schedule', (Request request) => _protectedHandler(ScheduleController.getSchedule)(request))
-  ..post('/api/schedule', (Request request) => _trainerHandler(ScheduleController.createSchedule)(request));
+  ..post('/api/schedule', (Request request) => _trainerHandler(ScheduleController.createSchedule)(request))
+
+// Manager routes
+  ..get('/api/manager/clients', (Request request) => _managerHandler(ManagerController.getAssignedClients)(request))
+  ..get('/api/manager/instructors', (Request request) => _managerHandler(ManagerController.getAssignedInstructors)(request))
+  ..get('/api/manager/trainers', (Request request) => _managerHandler(ManagerController.getAssignedTrainers)(request))
+  ..post('/api/managers/<id>/clients', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignClients(req, id))(request))
+  ..get('/api/managers/<id>/clients/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedClientIds(req, id))(request))
+  ..post('/api/managers/<id>/instructors', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignInstructors(req, id))(request))
+  ..get('/api/managers/<id>/instructors/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedInstructorIds(req, id))(request))
+  ..post('/api/managers/<id>/trainers', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignTrainers(req, id))(request))
+  ..get('/api/managers/<id>/trainers/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedTrainerIds(req, id))(request));

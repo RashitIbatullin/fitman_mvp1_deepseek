@@ -28,7 +28,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ClientDashboardScreen()),
+          MaterialPageRoute(builder: (context) => const ClientDashboard()),
         );
       });
     }

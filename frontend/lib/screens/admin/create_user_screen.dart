@@ -486,6 +486,8 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
         return 'Клиент';
       case 'trainer':
         return 'Тренер';
+      case 'manager':
+        return 'Менеджер';
       case 'admin':
         return 'Администратор';
       default:

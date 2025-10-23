@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_app_bar.dart';
 
-class TrainerDashboardScreen extends ConsumerWidget {
-  const TrainerDashboardScreen({super.key});
+class TrainerDashboard extends ConsumerWidget {
+  const TrainerDashboard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

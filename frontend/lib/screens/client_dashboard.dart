@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_app_bar.dart';
 
-class ClientDashboardScreen extends ConsumerWidget {
-  const ClientDashboardScreen({super.key});
+class ClientDashboard extends ConsumerWidget {
+  const ClientDashboard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'admin_dashboard.dart';
 import 'register_screen.dart';
 import 'client_dashboard.dart';
+import 'manager_dashboard.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -39,13 +40,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         switch (user.role) {
           case 'admin':
-            targetScreen = const AdminDashboardScreen();
+            targetScreen = const AdminDashboard();
             break;
           case 'trainer':
-            targetScreen = const TrainerDashboardScreen();
+            targetScreen = const TrainerDashboard();
             break;
           case 'client':
-            targetScreen = const ClientDashboardScreen();
+            targetScreen = const ClientDashboard();
+            break;
+          case 'manager':
+            targetScreen = const ManagerDashboard();
             break;
           default:
             targetScreen = const UnknownRoleScreen();
@@ -178,6 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   _buildTestUserChip('admin@fitman.ru', 'admin123', 'Админ'),
                   _buildTestUserChip('trainer@fitman.ru', 'trainer123', 'Тренер'),
+                  _buildTestUserChip('manager@fitman.ru', 'manager123', 'Менеджер'),
                   _buildTestUserChip('client@fitman.ru', 'client123', 'Клиент'),
                 ],
               ),

@@ -99,6 +99,27 @@ class User {
         : '';
     return '$lastName ${firstName[0]}.$middleInitial';
   }
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      email: json['email'],
+      passwordHash: json['passwordHash'] ?? '', // Не отправляется в безопасных ответах
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      middleName: json['middleName'],
+      role: json['role'],
+      phone: json['phone'],
+      gender: json['gender'],
+      age: json['age'],
+      sendNotification: json['sendNotification'] ?? true,
+      hourNotification: json['hourNotification'] ?? 1,
+      trackCalories: json['trackCalories'] ?? true,
+      coeffActivity: json['coeffActivity']?.toDouble() ?? 1.2,
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+    );
+  }
 }
 
 class AuthResponse {
