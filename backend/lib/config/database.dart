@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:postgres/postgres.dart';
+import 'package:dotenv/dotenv.dart';
 
 import '../models/user_back.dart';
 
@@ -27,37 +28,52 @@ class Database {
     return _connection!;
   }
 
-  Future<void> connect() async {
-    if (_connection != null) return;
-
-    _isConnecting = true;
-    _connectionCompleter = Completer<void>();
-
-    try {
-      // Создаем Endpoint для подключения
-      final endpoint = Endpoint(
-        host: 'localhost',
-        port: 5432,
-        database: 'fitman_mvp1_deepseek',
-        username: 'postgres',
-        password: 'postgres',
-      );
-
-      print('🔄 Connecting to PostgreSQL database...');
-      // Открываем соединение через статический метод
-      _connection = await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.disable));
-      print('✅ Connected to PostgreSQL database');
-
-      _connectionCompleter!.complete();
-    } catch (e) {
-      print('❌ Database connection error: $e');
-      _connectionCompleter!.completeError(e);
-      rethrow;
-    } finally {
-      _isConnecting = false;
-    }
-  }
-
+        Future<void> connect() async {
+          if (_connection != null) return;
+  
+          _isConnecting = true;
+          _connectionCompleter = Completer<void>();
+  
+                                        try {
+  
+                                          // Загружаем переменные окружения
+  
+                                          final env = DotEnv()..load();
+  
+                              
+  
+                                          // Создаем Endpoint для подключения
+  
+                                          final endpoint = Endpoint(
+  
+                                            host: env['DB_HOST'] ?? 'localhost',
+  
+                                            port: int.tryParse(env['DB_PORT'] ?? '5432') ?? 5432,
+  
+                                            database: env['DB_NAME'] ?? 'fitman_mvp1_deepseek',
+  
+                                            username: env['DB_USER'] ?? 'postgres',
+  
+                                            password: env['DB_PASS'] ?? 'postgres',
+  
+                                          );
+  
+                              
+  
+                                          print('🔄 Connecting to PostgreSQL database...');
+            // Открываем соединение через статический метод
+            _connection = await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.disable));
+            print('✅ Connected to PostgreSQL database');
+  
+            _connectionCompleter!.complete();
+          } catch (e) {
+            print('❌ Database connection error: $e');
+            _connectionCompleter!.completeError(e);
+            rethrow;
+          } finally {
+            _isConnecting = false;
+          }
+        }
   Future<void> disconnect() async {
     await _connection?.close();
     _connection = null;
