@@ -10,10 +10,6 @@ class UsersController {
     try {
       final user = request.context['user'] as Map<String, dynamic>?;
 
-      if (user == null || user['role'] != 'admin') {
-        return Response(403, body: jsonEncode({'error': 'Admin access required'}));
-      }
-
       final users = await Database().getAllUsers();
       final usersJson = users.map((user) => user.toSafeJson()).toList();
 
@@ -28,10 +24,6 @@ class UsersController {
   static Future<Response> createUser(Request request) async {
     try {
       final user = request.context['user'] as Map<String, dynamic>?;
-
-      if (user == null || user['role'] != 'admin') {
-        return Response(403, body: jsonEncode({'error': 'Admin access required'}));
-      }
 
       final body = await request.readAsString();
       final data = jsonDecode(body) as Map<String, dynamic>;
@@ -147,10 +139,6 @@ class UsersController {
       }
 
       final requestingUser = request.context['user'] as Map<String, dynamic>?;
-
-      if (requestingUser?['role'] != 'admin') {
-        return Response(403, body: jsonEncode({'error': 'Admin access required'}));
-      }
 
       if (requestingUser?['userId'] == userId) {
         return Response(400, body: jsonEncode({'error': 'Cannot delete your own account'}));

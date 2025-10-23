@@ -11,36 +11,29 @@ Handler _protectedHandler(Handler handler) {
   return requireAuth()(handler);
 }
 
-Handler _adminHandler(Handler handler) {
-  return (Request request) async {
-    final authResponse = await requireAuth()(handler)(request);
-    if (authResponse.statusCode != 200) {
-      return authResponse;
-    }
-
-    final user = request.context['user'] as Map<String, dynamic>?;
-    if (user == null || user['role'] != 'admin') {
-      return Response(403, body: '{"error": "Admin access required"}');
-    }
-
-    return handler(request);
+// Middleware для проверки роли 'trainer' или 'admin'
+Middleware _requireTrainerOrAdmin() {
+  return (Handler innerHandler) {
+    return (Request request) {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      final role = user?['role'] as String?;
+      if (user == null || (role != 'trainer' && role != 'admin')) {
+        return Response.forbidden('{"error": "Trainer or Admin access required"}');
+      }
+      return innerHandler(request);
+    };
   };
 }
 
+// Оборачиваем хендлеры в цепочку middleware
+Handler _adminHandler(Handler handler) {
+  // Сначала аутентификация, потом проверка роли
+  return requireAuth()(requireRole('admin')(handler));
+}
+
 Handler _trainerHandler(Handler handler) {
-  return (Request request) async {
-    final authResponse = await requireAuth()(handler)(request);
-    if (authResponse.statusCode != 200) {
-      return authResponse;
-    }
-
-    final user = request.context['user'] as Map<String, dynamic>?;
-    if (user == null || (user['role'] != 'trainer' && user['role'] != 'admin')) {
-      return Response(403, body: '{"error": "Trainer access required"}');
-    }
-
-    return handler(request);
-  };
+  // Сначала аутентификация, потом проверка роли
+  return requireAuth()(_requireTrainerOrAdmin()(handler));
 }
 
 // Создаем и экспортируем роутер
