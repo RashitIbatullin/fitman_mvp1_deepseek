@@ -11,6 +11,7 @@ import '../controllers/dashboard_controller.dart';
 import '../controllers/anthropometry_controller.dart';
 import '../controllers/calorie_tracking_controller.dart';
 import '../controllers/progress_controller.dart';
+import '../controllers/catalogs/work_schedule_controller.dart';
 
 // Создаем обертки для protected routes
 Handler _protectedHandler(Handler handler) {
@@ -131,4 +132,10 @@ final Router router = Router()
   ..get('/api/client/manager', (Request request) => _protectedHandler(UsersController.getManagerForClient)(request))
   ..get('/api/client/anthropometry', (Request request) => _protectedHandler(AnthropometryController.getAnthropometryDataForClient)(request))
   ..get('/api/client/calorie-tracking', (Request request) => _protectedHandler(CalorieTrackingController.getCalorieTrackingDataForClient)(request))
-  ..get('/api/client/progress', (Request request) => _protectedHandler(ProgressController.getProgressDataForClient)(request));
+  ..get('/api/client/progress', (Request request) => _protectedHandler(ProgressController.getProgressDataForClient)(request))
+
+// Work Schedule routes
+  ..get('/api/work-schedules', (Request request) => _managerHandler(WorkScheduleController.getWorkSchedules)(request))
+  ..post('/api/work-schedules', (Request request) => _adminHandler(WorkScheduleController.createWorkSchedule)(request))
+  ..put('/api/work-schedules', (Request request) => _adminHandler(WorkScheduleController.updateWorkSchedule)(request))
+  ..delete('/api/work-schedules', (Request request) => _adminHandler(WorkScheduleController.deleteWorkSchedule)(request));

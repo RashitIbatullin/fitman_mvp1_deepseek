@@ -35,8 +35,37 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 -- Комментарий к базе данных
 COMMENT ON DATABASE fitman_mvp1_deepseek IS 'Фитнес-менеджер MVP1 от DeepSeek - основная база данных';
 
+-- Создание таблицы work_schedules
+CREATE TABLE work_schedules (
+    id BIGSERIAL PRIMARY KEY,
+    day_of_week INT NOT NULL UNIQUE,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_day_off BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by BIGINT,
+    updated_by BIGINT,
+    archived_at TIMESTAMP WITH TIME ZONE,
+    archived_by BIGINT,
+    company_id BIGINT DEFAULT -1
+);
+
+COMMENT ON TABLE work_schedules IS 'Расписание работы центра';
+
+-- Вставка начальных данных в work_schedules
+INSERT INTO work_schedules (day_of_week, start_time, end_time, is_day_off) VALUES
+(1, '09:00', '21:00', false),
+(2, '09:00', '21:00', false),
+(3, '09:00', '21:00', false),
+(4, '09:00', '21:00', false),
+(5, '09:00', '21:00', false),
+(6, '09:00', '21:00', false),
+(7, '09:00', '21:00', false);
+
 -- Вывод информации о созданной базе
 SELECT 
     '✅ База данных FitMan успешно создана' as message,
     current_database() as database_name,
     current_user as current_user;
+

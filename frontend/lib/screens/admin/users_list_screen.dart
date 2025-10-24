@@ -100,6 +100,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
     return Scaffold(
       appBar: CustomAppBar.admin(
         title: 'Управление пользователями',
+        onTabSelected: (index) {},
       ),
       body: Column(
         children: [

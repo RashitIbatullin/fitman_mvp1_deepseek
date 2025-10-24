@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/schedule_item.dart';
 import '../models/user_front.dart';
+import '../models/work_schedule.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8080';
@@ -668,6 +669,46 @@ class ApiService {
       }
     } catch (e) {
       print('Get progress data error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение расписания работы центра
+  static Future<List<WorkSchedule>> getWorkSchedules() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/work-schedules'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => WorkSchedule.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load work schedules with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get work schedules error: $e');
+      rethrow;
+    }
+  }
+
+  // Обновление расписания работы центра
+  static Future<void> updateWorkSchedule(WorkSchedule schedule) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/work-schedules'),
+        headers: _headers,
+        body: jsonEncode(schedule.toJson()),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to update work schedule with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Update work schedule error: $e');
       rethrow;
     }
   }

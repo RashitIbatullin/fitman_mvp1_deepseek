@@ -120,6 +120,7 @@ class _CreateUserScreenState extends ConsumerState<CreateUserScreen> {
     return Scaffold(
       appBar: CustomAppBar.admin(
         title: 'Создание: ${_getRoleDisplayName(_selectedRole)}',
+        onTabSelected: (index) {},
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

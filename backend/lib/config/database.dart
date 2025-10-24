@@ -905,6 +905,24 @@ class Database {
         )
       ''');
 
+      // Создаем таблицу расписания работы центра (work_schedules)
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS work_schedules (
+            id BIGSERIAL PRIMARY KEY,
+            day_of_week INT NOT NULL UNIQUE,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            is_day_off BOOLEAN DEFAULT false,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            created_by BIGINT,
+            updated_by BIGINT,
+            archived_at TIMESTAMP WITH TIME ZONE,
+            archived_by BIGINT,
+            company_id BIGINT DEFAULT -1
+        )
+      ''');
+
       print('✅ Database tables initialized');
     } catch (e) {
       print('❌ Database initialization error: $e');
