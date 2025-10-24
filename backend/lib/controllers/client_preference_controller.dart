@@ -14,7 +14,7 @@ class ClientPreferenceController {
 
       // Get client ID from request context (assuming it's set by auth middleware)
       final user = request.context['user'] as Map<String, dynamic>?;
-      final clientId = user?['id'] as int?;
+      final clientId = user?['userId'] as int?;
 
       if (clientId == null) {
         return Response.badRequest(body: jsonEncode({'error': 'Client ID not found in token.'}));
