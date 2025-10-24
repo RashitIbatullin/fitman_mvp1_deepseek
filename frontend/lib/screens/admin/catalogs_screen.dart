@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // This import might not be needed if not using GoRouter directly here
 import 'work_schedule_screen.dart'; // Import the WorkScheduleScreen
 import 'generic_catalog_screen.dart'; // Import the GenericCatalogScreen
-import 'generic_catalog_screen.dart'; // Import the GenericCatalogScreen
 
 class CatalogsScreen extends StatelessWidget {
   const CatalogsScreen({super.key});

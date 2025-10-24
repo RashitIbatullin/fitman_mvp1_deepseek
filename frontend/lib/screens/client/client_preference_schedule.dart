@@ -1,34 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-
-// TODO: Integrate with backend to fetch actual work_schedules
-// For now, using dummy data for work schedules
-class WorkSchedule {
-  final int dayOfWeek; // 1 for Monday, 7 for Sunday
-  final TimeOfDay startTime;
-  final TimeOfDay endTime;
-  final bool isDayOff;
-
-  WorkSchedule({
-    required this.dayOfWeek,
-    required this.startTime,
-    required this.endTime,
-    this.isDayOff = false,
-  });
-}
-
-final List<WorkSchedule> dummyWorkSchedules = [
-  WorkSchedule(dayOfWeek: 1, startTime: TimeOfDay(hour: 9, minute: 0), endTime: TimeOfDay(hour: 20, minute: 0)), // Monday
-  WorkSchedule(dayOfWeek: 2, startTime: TimeOfDay(hour: 9, minute: 0), endTime: TimeOfDay(hour: 20, minute: 0)), // Tuesday
-  WorkSchedule(dayOfWeek: 3, startTime: TimeOfDay(hour: 9, minute: 0), endTime: TimeOfDay(hour: 20, minute: 0)), // Wednesday
-  WorkSchedule(dayOfWeek: 4, startTime: TimeOfDay(hour: 9, minute: 0), endTime: TimeOfDay(hour: 20, minute: 0)), // Thursday
-  WorkSchedule(dayOfWeek: 5, startTime: TimeOfDay(hour: 9, minute: 0), endTime: TimeOfDay(hour: 20, minute: 0)), // Friday
-  WorkSchedule(dayOfWeek: 6, startTime: TimeOfDay(hour: 10, minute: 0), endTime: TimeOfDay(hour: 18, minute: 0), isDayOff: false), // Saturday
-  WorkSchedule(dayOfWeek: 7, startTime: TimeOfDay(hour: 0, minute: 0), endTime: TimeOfDay(hour: 0, minute: 0), isDayOff: true), // Sunday
-];
-
+import '../../providers/work_schedule_provider.dart';
+import '../../models/work_schedule.dart';
+import '../../services/api_service.dart'; // Import ApiService
+import '../../models/client_schedule_preference.dart'; // Import ClientSchedulePreference
 
 class ClientPreferenceSchedule extends ConsumerStatefulWidget {
   const ClientPreferenceSchedule({super.key});
@@ -38,148 +13,209 @@ class ClientPreferenceSchedule extends ConsumerStatefulWidget {
 }
 
 class _ClientPreferenceScheduleState extends ConsumerState<ClientPreferenceSchedule> {
-  final Map<int, TimeOfDay?> _preferredStartTimes = {};
-  final Map<int, TimeOfDay?> _preferredEndTimes = {};
+  final _formKey = GlobalKey<FormState>();
+  final Map<int, TextEditingController> _preferredStartTimes = {};
+  final Map<int, TextEditingController> _preferredEndTimes = {};
+
+  // Add a state to hold fetched client preferences
+  AsyncValue<List<ClientSchedulePreference>> _clientPreferences = const AsyncValue.loading();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchClientPreferences();
+  }
+
+  Future<void> _fetchClientPreferences() async {
+    _clientPreferences = const AsyncValue.loading();
+    try {
+      final preferences = await ApiService.getClientPreferences();
+      setState(() {
+        _clientPreferences = AsyncValue.data(preferences);
+        // Populate controllers with fetched preferences
+        for (var pref in preferences) {
+          _preferredStartTimes[pref.dayOfWeek]?.text = pref.preferredStartTime;
+          _preferredEndTimes[pref.dayOfWeek]?.text = pref.preferredEndTime;
+        }
+      });
+    } catch (e, st) {
+      setState(() {
+        _clientPreferences = AsyncValue.error(e, st);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _preferredStartTimes.forEach((key, controller) => controller.dispose());
+    _preferredEndTimes.forEach((key, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  String _dayOfWeekToString(int day) {
+    switch (day) {
+      case 1:
+        return 'Понедельник';
+      case 2:
+        return 'Вторник';
+      case 3:
+        return 'Среда';
+      case 4:
+        return 'Четверг';
+      case 5:
+        return 'Пятница';
+      case 6:
+        return 'Суббота';
+      case 7:
+        return 'Воскресенье';
+      default:
+        return '';
+    }
+  }
+
+  String? _timeValidator(String? value, String availableStartTime, String availableEndTime) {
+    if (value == null || value.isEmpty) {
+      return null; // Not required to fill
+    }
+    final timeRegex = RegExp(r'^([01]\d|2[0-3]):([0-5]\d)$');
+    if (!timeRegex.hasMatch(value)) {
+      return 'Неверный формат (ЧЧ:ММ)';
+    }
+
+    // Further validation: check if within available range
+    final inputTime = _parseTime(value);
+    final start = _parseTime(availableStartTime);
+    final end = _parseTime(availableEndTime);
+
+    if (inputTime.isBefore(start) || inputTime.isAfter(end)) {
+      return 'Время вне доступного диапазона';
+    }
+
+    return null;
+  }
+
+  TimeOfDay _parseTime(String time) {
+    final parts = time.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final workingDays = dummyWorkSchedules.where((s) => !s.isDayOff).toList();
+    final workSchedulesAsync = ref.watch(workScheduleProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Предпочтения по расписанию'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
+      body: Form(
+        key: _formKey,
+        child: workSchedulesAsync.when(
+          data: (schedules) {
+            final workingDays = schedules.where((s) => !s.isDayOff).toList();
+            if (workingDays.isEmpty) {
+              return const Center(child: Text('Нет доступного расписания работы центра.'));
+            }
+
+            // Combine work schedules with client preferences
+            // This ensures controllers are initialized and then populated
+            _clientPreferences.whenOrNull(
+              data: (preferences) {
+                for (var pref in preferences) {
+                  _preferredStartTimes.putIfAbsent(pref.dayOfWeek, () => TextEditingController()).text = pref.preferredStartTime;
+                  _preferredEndTimes.putIfAbsent(pref.dayOfWeek, () => TextEditingController()).text = pref.preferredEndTime;
+                }
+              },
+            );
+
+            return ListView.builder(
               itemCount: workingDays.length,
               itemBuilder: (context, index) {
-                final daySchedule = workingDays[index];
-                final dayName = DateFormat('EEEE', 'ru').format(
-                  DateTime(2023, 1, daySchedule.dayOfWeek), // Use a fixed date to get day name
-                );
-                final availableStartTime = daySchedule.startTime;
-                final availableEndTime = daySchedule.endTime;
+                final schedule = workingDays[index];
+                final dayOfWeek = schedule.dayOfWeek;
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$dayName (доступно с ${availableStartTime.format(context)} до ${availableEndTime.format(context)})',
-                            style: Theme.of(context).textTheme.titleMedium,
+                // Ensure controllers are initialized for this day if not already by fetched preferences
+                _preferredStartTimes.putIfAbsent(dayOfWeek, () => TextEditingController());
+                _preferredEndTimes.putIfAbsent(dayOfWeek, () => TextEditingController());
+
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _dayOfWeekToString(dayOfWeek),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Text('Доступно: ${schedule.startTime} - ${schedule.endTime}'),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _preferredStartTimes[dayOfWeek],
+                          decoration: const InputDecoration(
+                            labelText: 'Желаемое время начала (ЧЧ:ММ)',
+                            border: OutlineInputBorder(),
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTimePicker(
-                                  context,
-                                  daySchedule.dayOfWeek,
-                                  true, // isStartTime
-                                  availableStartTime,
-                                  availableEndTime,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildTimePicker(
-                                  context,
-                                  daySchedule.dayOfWeek,
-                                  false, // isStartTime
-                                  availableStartTime,
-                                  availableEndTime,
-                                ),
-                              ),
-                            ],
+                          validator: (value) => _timeValidator(value, schedule.startTime, schedule.endTime),
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: _preferredEndTimes[dayOfWeek],
+                          decoration: const InputDecoration(
+                            labelText: 'Желаемое время окончания (ЧЧ:ММ)',
+                            border: OutlineInputBorder(),
                           ),
-                        ],
-                      ),
+                          validator: (value) => _timeValidator(value, schedule.startTime, schedule.endTime),
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement save logic
-                    print('Preferred Start Times: $_preferredStartTimes');
-                    print('Preferred End Times: $_preferredEndTimes');
-                    Navigator.pop(context); // Go back
-                  },
-                  child: const Text('Сохранить'),
-                ),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Go back without saving
-                  },
-                  child: const Text('Отмена'),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimePicker(
-    BuildContext context,
-    int dayOfWeek,
-    bool isStartTime,
-    TimeOfDay availableStartTime,
-    TimeOfDay availableEndTime,
-  ) {
-    final selectedTime = isStartTime ? _preferredStartTimes[dayOfWeek] : _preferredEndTimes[dayOfWeek];
-
-    return InkWell(
-      onTap: () async {
-        final TimeOfDay? picked = await showTimePicker(
-          context: context,
-          initialTime: selectedTime ?? (isStartTime ? availableStartTime : availableEndTime),
-          builder: (BuildContext context, Widget? child) {
-            return MediaQuery(
-              data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-              child: child!,
             );
           },
-        );
-        if (picked != null) {
-          setState(() {
-            if (isStartTime) {
-              _preferredStartTimes[dayOfWeek] = picked;
-            } else {
-              _preferredEndTimes[dayOfWeek] = picked;
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(child: Text('Ошибка загрузки расписания: $error')),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async { // Make onPressed async
+          if (_formKey.currentState!.validate()) {
+            final List<ClientSchedulePreference> preferencesToSave = [];
+            _preferredStartTimes.forEach((day, controller) {
+              if (controller.text.isNotEmpty && _preferredEndTimes[day]!.text.isNotEmpty) {
+                preferencesToSave.add(ClientSchedulePreference(
+                  clientId: 0, // Will be set by backend from token
+                  dayOfWeek: day,
+                  preferredStartTime: controller.text,
+                  preferredEndTime: _preferredEndTimes[day]!.text,
+                ));
+              }
+            });
+
+            try {
+              await ApiService.saveClientPreferences(preferencesToSave);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Предпочтения сохранены!'),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+              // Re-fetch preferences to ensure UI is updated if needed
+              _fetchClientPreferences();
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Ошибка сохранения предпочтений: $e'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
             }
-          });
-        }
-      },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: isStartTime ? 'Начало' : 'Окончание',
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              selectedTime?.format(context) ?? 'Выберите время',
-            ),
-            const Icon(Icons.access_time),
-          ],
-        ),
+          }
+        },
+        child: const Icon(Icons.save),
       ),
     );
   }

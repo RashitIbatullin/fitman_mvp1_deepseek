@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/schedule_item.dart';
 import '../models/user_front.dart';
 import '../models/work_schedule.dart';
+import '../models/client_schedule_preference.dart'; // Import ClientSchedulePreference
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8080';
@@ -709,6 +710,46 @@ class ApiService {
       }
     } catch (e) {
       print('Update work schedule error: $e');
+      rethrow;
+    }
+  }
+
+  // Сохранение предпочтений клиента
+  static Future<void> saveClientPreferences(List<ClientSchedulePreference> preferences) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/client/preferences'),
+        headers: _headers,
+        body: jsonEncode(preferences.map((p) => p.toJson()).toList()),
+      );
+
+      if (response.statusCode != 200) {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to save client preferences with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Save client preferences error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение предпочтений клиента
+  static Future<List<ClientSchedulePreference>> getClientPreferences() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/preferences'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => ClientSchedulePreference.fromJson(json)).toList();
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load client preferences with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get client preferences error: $e');
       rethrow;
     }
   }

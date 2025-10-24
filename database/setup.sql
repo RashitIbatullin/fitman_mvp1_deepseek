@@ -63,6 +63,25 @@ INSERT INTO work_schedules (day_of_week, start_time, end_time, is_day_off) VALUE
 (6, '09:00', '21:00', false),
 (7, '09:00', '21:00', false);
 
+-- Создание таблицы client_schedule_preferences
+CREATE TABLE client_schedule_preferences (
+    id BIGSERIAL PRIMARY KEY,
+    client_id BIGINT NOT NULL REFERENCES users(id),
+    day_of_week INT NOT NULL,
+    preferred_start_time TIME NOT NULL,
+    preferred_end_time TIME NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_by BIGINT,
+    updated_by BIGINT,
+    archived_at TIMESTAMP WITH TIME ZONE,
+    archived_by BIGINT,
+    company_id BIGINT DEFAULT -1,
+    UNIQUE (client_id, day_of_week) -- A client can only have one preference per day
+);
+
+COMMENT ON TABLE client_schedule_preferences IS 'Предпочтения клиента по расписанию';
+
 -- Вывод информации о созданной базе
 SELECT 
     '✅ База данных FitMan успешно создана' as message,

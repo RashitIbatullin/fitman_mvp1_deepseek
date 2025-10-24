@@ -231,7 +231,9 @@ class ClientDashboard extends ConsumerWidget {
         Expanded(
           child: Card(
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SessionsScreen()));
+              },
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
