@@ -1,20 +1,25 @@
 
-import 'package:fitman_app/providers/auth_provider.dart';
-import 'package:fitman_app/screens/admin_dashboard.dart';
-import 'package:fitman_app/screens/trainer_dashboard.dart';
-import 'package:fitman_app/screens/unknown_role_screen.dart';
-import 'package:fitman_app/screens/manager_dashboard.dart';
-import 'package:fitman_app/screens/instructor_dashboard.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/login_screen.dart';
+
+import 'providers/auth_provider.dart';
+import 'screens/admin_dashboard.dart';
 import 'screens/client_dashboard.dart';
+import 'screens/instructor_dashboard.dart';
+import 'screens/login_screen.dart';
+import 'screens/manager_dashboard.dart';
+import 'screens/trainer_dashboard.dart';
+import 'screens/unknown_role_screen.dart';
 import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Инициализация форматирования дат
+  await initializeDateFormatting('ru', null);
 
   // Очищаем сохраненную аутентификацию при каждом запуске (для разработки)
 //  WidgetsFlutterBinding.ensureInitialized();
@@ -57,8 +62,7 @@ class MyApp extends ConsumerWidget  {
               return const InstructorDashboard();
             case 'client':
               return const ClientDashboard();
-            default:
-              return const UnknownRoleScreen();
+            default:              return const UnknownRoleScreen();
           }
         },
         loading: () => const Scaffold(

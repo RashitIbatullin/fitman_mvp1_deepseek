@@ -7,6 +7,10 @@ import '../controllers/schedule_controller.dart';
 import '../controllers/manager_controller.dart';
 import '../controllers/instructor_controller.dart';
 import '../middleware/auth_middleware.dart';
+import '../controllers/dashboard_controller.dart';
+import '../controllers/anthropometry_controller.dart';
+import '../controllers/calorie_tracking_controller.dart';
+import '../controllers/progress_controller.dart';
 
 // Создаем обертки для protected routes
 Handler _protectedHandler(Handler handler) {
@@ -116,4 +120,15 @@ final Router router = Router()
 // Instructor routes
   ..get('/api/instructor/clients', (Request request) => _instructorHandler(InstructorController.getAssignedClients)(request))
   ..get('/api/instructor/trainers', (Request request) => _instructorHandler(InstructorController.getAssignedTrainers)(request))
-  ..get('/api/instructor/manager', (Request request) => _instructorHandler(InstructorController.getAssignedManager)(request));
+  ..get('/api/instructor/manager', (Request request) => _instructorHandler(InstructorController.getAssignedManager)(request))
+
+// Dashboard routes
+  ..get('/api/dashboard/client', (Request request) => _protectedHandler(DashboardController.getClientDashboardData)(request))
+
+// Client routes
+  ..get('/api/client/trainer', (Request request) => _protectedHandler(UsersController.getTrainerForClient)(request))
+  ..get('/api/client/instructor', (Request request) => _protectedHandler(UsersController.getInstructorForClient)(request))
+  ..get('/api/client/manager', (Request request) => _protectedHandler(UsersController.getManagerForClient)(request))
+  ..get('/api/client/anthropometry', (Request request) => _protectedHandler(AnthropometryController.getAnthropometryDataForClient)(request))
+  ..get('/api/client/calorie-tracking', (Request request) => _protectedHandler(CalorieTrackingController.getCalorieTrackingDataForClient)(request))
+  ..get('/api/client/progress', (Request request) => _protectedHandler(ProgressController.getProgressDataForClient)(request));

@@ -640,6 +640,147 @@ class Database {
     }
   }
 
+  // Получить тренера для клиента
+  Future<User?> getTrainerForClient(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching trainer for client $clientId');
+    // Placeholder implementation
+    return User(
+      id: 2,
+      email: 'trainer@example.com',
+      passwordHash: '',
+      firstName: 'Иван',
+      lastName: 'Петров',
+      role: 'trainer',
+      phone: '+7 999 123-45-67',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  // Получить инструктора для клиента
+  Future<User?> getInstructorForClient(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching instructor for client $clientId');
+    // Placeholder implementation
+    return User(
+      id: 3,
+      email: 'instructor@example.com',
+      passwordHash: '',
+      firstName: 'Анна',
+      lastName: 'Сидорова',
+      role: 'instructor',
+      phone: '+7 999 765-43-21',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  // Получить менеджера для клиента
+  Future<User?> getManagerForClient(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching manager for client $clientId');
+    // Placeholder implementation
+    return User(
+      id: 4,
+      email: 'manager@example.com',
+      passwordHash: '',
+      firstName: 'Елена',
+      lastName: 'Иванова',
+      role: 'manager',
+      phone: '+7 999 111-22-33',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  // Получить данные антропометрии для клиента
+  Future<Map<String, dynamic>> getAnthropometryData(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching anthropometry data for client $clientId');
+    // Placeholder implementation
+    return {
+      'fixed': {
+        'height': 180,
+        'wrist_circ': 18,
+        'ankle_circ': 22,
+      },
+      'start': {
+        'weight': 85,
+        'shoulders_circ': 120,
+        'breast_circ': 100,
+        'waist_circ': 90,
+        'hips_circ': 100,
+      },
+      'finish': {
+        'weight': 75,
+        'shoulders_circ': 115,
+        'breast_circ': 95,
+        'waist_circ': 80,
+        'hips_circ': 95,
+      },
+    };
+  }
+
+  // Получить данные отслеживания калорий для клиента
+  Future<List<Map<String, dynamic>>> getCalorieTrackingData(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching calorie tracking data for client $clientId');
+    // Placeholder implementation
+    return [
+      {
+        'date': '2025-10-27T18:00:00',
+        'training': 'Тренировка 1',
+        'consumed': 2200,
+        'burned': 2500,
+        'balance': -300,
+      },
+      {
+        'date': '2025-10-29T18:00:00',
+        'training': 'Тренировка 2',
+        'consumed': 2400,
+        'burned': 2100,
+        'balance': 300,
+      },
+    ];
+  }
+
+  // Получить данные прогресса для клиента
+  Future<Map<String, dynamic>> getProgressData(int clientId) async {
+    // TODO: Implement actual database query
+    print('Fetching progress data for client $clientId');
+    // Placeholder implementation
+    return {
+      'weight': [
+        {'date': '2025-10-01', 'value': 85},
+        {'date': '2025-10-08', 'value': 84},
+        {'date': '2025-10-15', 'value': 82},
+        {'date': '2025-10-22', 'value': 83},
+        {'date': '2025-10-29', 'value': 81},
+      ],
+      'calories': [
+        {'date': '2025-10-01', 'value': 2200},
+        {'date': '2025-10-08', 'value': 2100},
+        {'date': '2025-10-15', 'value': 2000},
+        {'date': '2025-10-22', 'value': 2300},
+        {'date': '2025-10-29', 'value': 2050},
+      ],
+      'balance': [
+        {'date': '2025-10-01', 'value': -300},
+        {'date': '2025-10-08', 'value': 100},
+        {'date': '2025-10-15', 'value': -500},
+        {'date': '2025-10-22', 'value': 200},
+        {'date': '2025-10-29', 'value': -150},
+      ],
+      'kpi': {
+        'avgWeight': 82.2,
+        'weightChange': -2.8,
+        'avgCalories': 2130,
+      },
+      'recommendations': 'Ваш прогресс замедлился. Попробуйте добавить больше кардио-упражнений и следите за потреблением углеводов.',
+    };
+  }
+
   // Инициализация базы данных (создание таблиц если не существуют)
   Future<void> initializeDatabase() async {
     try {
@@ -711,6 +852,56 @@ class Database {
           note VARCHAR(255),
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW()
+        )
+      ''');
+
+      // Создаем таблицу занятий (lessons)
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS lessons (
+          id SERIAL PRIMARY KEY,
+          schedule_id BIGINT,
+          client_training_plan_id BIGINT,
+          set_exercises_id BIGINT,
+          client_id BIGINT REFERENCES users(id),
+          instructor_id BIGINT REFERENCES users(id),
+          trainer_id BIGINT REFERENCES users(id),
+          start_plan_at TIMESTAMP,
+          start_fact_at TIMESTAMP,
+          finish_plan_at TIMESTAMP,
+          finish_fact_at TIMESTAMP,
+          complete INTEGER,
+          note VARCHAR(100)
+        )
+      ''');
+
+      // Создаем таблицу целей тренировок (goals_training)
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS goals_training (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(20) NOT NULL
+        )
+      ''');
+
+      // Создаем таблицу шаблонов планов тренировок (training_plan_templates)
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS training_plan_templates (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          goal_training_id BIGINT REFERENCES goals_training(id)
+        )
+      ''');
+
+      // Создаем таблицу индивидуальных планов тренировок клиента (client_training_plans)
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS client_training_plans (
+          id SERIAL PRIMARY KEY,
+          client_id BIGINT REFERENCES users(id),
+          training_plan_template_id BIGINT REFERENCES training_plan_templates(id),
+          assigned_by BIGINT REFERENCES users(id),
+          assigned_at TIMESTAMP,
+          is_active BOOLEAN,
+          goal VARCHAR,
+          notes TEXT
         )
       ''');
 

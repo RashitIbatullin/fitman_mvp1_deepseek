@@ -528,4 +528,147 @@ class ApiService {
       throw Exception('Failed to send message with status ${response.statusCode}');
     }
   }
+
+  // Получение данных для дашборда клиента
+  static Future<Map<String, dynamic>> getClientDashboardData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/dashboard/client'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load dashboard data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get client dashboard data error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение тренера для клиента
+  static Future<User> getTrainerForClient() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/trainer'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return User.fromJson(data['trainer']);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load trainer data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get trainer for client error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение инструктора для клиента
+  static Future<User> getInstructorForClient() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/instructor'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return User.fromJson(data['instructor']);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load instructor data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get instructor for client error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение менеджера для клиента
+  static Future<User> getManagerForClient() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/manager'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return User.fromJson(data['manager']);
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load manager data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get manager for client error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение данных антропометрии для клиента
+  static Future<Map<String, dynamic>> getAnthropometryData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/anthropometry'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load anthropometry data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get anthropometry data error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение данных отслеживания калорий для клиента
+  static Future<List<dynamic>> getCalorieTrackingData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/calorie-tracking'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load calorie tracking data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get calorie tracking data error: $e');
+      rethrow;
+    }
+  }
+
+  // Получение данных прогресса для клиента
+  static Future<Map<String, dynamic>> getProgressData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/client/progress'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to load progress data with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Get progress data error: $e');
+      rethrow;
+    }
+  }
 }

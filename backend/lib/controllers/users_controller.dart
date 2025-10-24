@@ -177,4 +177,70 @@ class UsersController {
       return Response(500, body: jsonEncode({'error': 'Internal server error'}));
     }
   }
+
+  // Получить тренера для клиента
+  static Future<Response> getTrainerForClient(Request request) async {
+    try {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      if (user == null) {
+        return Response(401, body: jsonEncode({'error': 'Not authenticated'}));
+      }
+
+      final clientId = user['userId'] as int;
+      final trainer = await Database().getTrainerForClient(clientId);
+
+      if (trainer == null) {
+        return Response(404, body: jsonEncode({'error': 'Trainer not found for this client'}));
+      }
+
+      return Response.ok(jsonEncode({'trainer': trainer.toSafeJson()}));
+    } catch (e) {
+      print('Get trainer for client error: $e');
+      return Response(500, body: jsonEncode({'error': 'Internal server error'}));
+    }
+  }
+
+  // Получить инструктора для клиента
+  static Future<Response> getInstructorForClient(Request request) async {
+    try {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      if (user == null) {
+        return Response(401, body: jsonEncode({'error': 'Not authenticated'}));
+      }
+
+      final clientId = user['userId'] as int;
+      final instructor = await Database().getInstructorForClient(clientId);
+
+      if (instructor == null) {
+        return Response(404, body: jsonEncode({'error': 'Instructor not found for this client'}));
+      }
+
+      return Response.ok(jsonEncode({'instructor': instructor.toSafeJson()}));
+    } catch (e) {
+      print('Get instructor for client error: $e');
+      return Response(500, body: jsonEncode({'error': 'Internal server error'}));
+    }
+  }
+
+  // Получить менеджера для клиента
+  static Future<Response> getManagerForClient(Request request) async {
+    try {
+      final user = request.context['user'] as Map<String, dynamic>?;
+      if (user == null) {
+        return Response(401, body: jsonEncode({'error': 'Not authenticated'}));
+      }
+
+      final clientId = user['userId'] as int;
+      final manager = await Database().getManagerForClient(clientId);
+
+      if (manager == null) {
+        return Response(404, body: jsonEncode({'error': 'Manager not found for this client'}));
+      }
+
+      return Response.ok(jsonEncode({'manager': manager.toSafeJson()}));
+    } catch (e) {
+      print('Get manager for client error: $e');
+      return Response(500, body: jsonEncode({'error': 'Internal server error'}));
+    }
+  }
 }

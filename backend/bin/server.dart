@@ -9,15 +9,6 @@ import  '../lib/config/app_config.dart';
 import '../lib/middleware/cors_middleware.dart';
 
 void main(List<String> args) async {
-  // Инициализируем базу данных
-  try {
-    await Database().initializeDatabase();
-    print('✅ Database initialized successfully');
-  } catch (e) {
-    print('❌ Failed to initialize database: $e');
-    exit(1);
-  }
-
   // Создаем pipeline с middleware
   final handler = const Pipeline()
       .addMiddleware(helmet())
@@ -26,11 +17,15 @@ void main(List<String> args) async {
       .addMiddleware(logRequests())
       .addHandler(router.call);
 
+  // Запускаем сервер
   final server = await io.serve(
       handler,
       AppConfig.serverHost,
       AppConfig.serverPort
   );
+
+  // Инициализация базы данных
+  await Database().initializeDatabase();
 
   print('🚀 FitMan Dart backend MVP1 running on http://${server.address.host}:${server.port}');
   print('📝 API Health: http://localhost:${AppConfig.serverPort}/api/health');
