@@ -30,51 +30,51 @@ class Database {
 
         Future<void> connect() async {
           if (_connection != null) return;
-  
+
           _isConnecting = true;
           _connectionCompleter = Completer<void>();
-  
+
                                         try {
-  
+
                                           // Загружаем переменные окружения
-  
+
                                           final env = DotEnv()..load();
-  
-                              
-  
+
+
+
                                           // Создаем Endpoint для подключения
-  
+
                                           final endpoint = Endpoint(
-  
+
                                             host: env['DB_HOST'] ?? 'localhost',
-  
+
                                             port: int.tryParse(env['DB_PORT'] ?? '5432') ?? 5432,
-  
+
                                             database: env['DB_NAME'] ?? 'fitman_mvp1_deepseek',
-  
+
                                             username: env['DB_USER'] ?? 'postgres',
-  
+
                                             password: env['DB_PASS'] ?? 'postgres',
-  
+
                                           );
-  
-                              
-  
+
+
+
                                           print('🔄 Connecting to PostgreSQL database...');
             // Открываем соединение через статический метод
             _connection = await Connection.open(endpoint, settings: ConnectionSettings(sslMode: SslMode.disable));
             print('✅ Connected to PostgreSQL database');
-  
+
             _connectionCompleter!.complete();
-          } catch (e) {
-            print('❌ Database connection error: $e');
-            _connectionCompleter!.completeError(e);
-            rethrow;
-          } finally {
-            _isConnecting = false;
-          }
+                                        } catch (e) {
+                                          print('❌ Database connection error: $e');
+                                          _connectionCompleter!.completeError(e);
+                                          rethrow;
+                                        } finally {
+                                          _isConnecting = false;
+                                        }
         }
-  Future<void> disconnect() async {
+    Future<void> disconnect() async {
     await _connection?.close();
     _connection = null;
     _connectionCompleter = null;
@@ -87,22 +87,23 @@ class Database {
     try {
       final conn = await connection;
       final results = await conn.execute('''
-        SELECT id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at 
-        FROM users 
-        ORDER BY created_at DESC
+        SELECT DISTINCT ON (u.id)
+          u.id, 
+          u.email, 
+          u.password_hash, 
+          u.first_name, 
+          u.last_name, 
+          r.name as role, 
+          u.phone, 
+          u.created_at, 
+          u.updated_at 
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        ORDER BY u.id, r.id
       ''');
 
-      return results.map((row) => User.fromMap({
-        'id': row[0],
-        'email': row[1],
-        'password_hash': row[2],
-        'first_name': row[3],
-        'last_name': row[4],
-        'role': row[5],
-        'phone': row[6],
-        'created_at': row[7],
-        'updated_at': row[8],
-      })).toList();
+      return results.map((row) => User.fromMap(row.toColumnMap())).toList();
     } catch (e) {
       print('❌ getAllUsers error: $e');
       rethrow;
@@ -115,9 +116,21 @@ class Database {
       final conn = await connection;
 
       final sql = '''
-        SELECT id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at 
-        FROM users 
-        WHERE email = @email
+        SELECT 
+          u.id, 
+          u.email, 
+          u.password_hash, 
+          u.first_name, 
+          u.last_name, 
+          r.name as role, 
+          u.phone, 
+          u.created_at, 
+          u.updated_at 
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.email = @email
+        LIMIT 1
       ''';
 
       final results = await conn.execute(
@@ -129,18 +142,8 @@ class Database {
 
       if (results.isEmpty) return null;
 
-      final row = results.first;
-      return User.fromMap({
-        'id': row[0],
-        'email': row[1],
-        'password_hash': row[2],
-        'first_name': row[3],
-        'last_name': row[4],
-        'role': row[5],
-        'phone': row[6],
-        'created_at': row[7],
-        'updated_at': row[8],
-      });
+      final row = results.first.toColumnMap();
+      return User.fromMap(row);
     } catch (e) {
       print('❌ getUserByEmail error: $e');
       rethrow;
@@ -153,9 +156,21 @@ class Database {
       final conn = await connection;
 
       final sql = '''
-        SELECT id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at 
-        FROM users 
-        WHERE id = @id
+        SELECT 
+          u.id, 
+          u.email, 
+          u.password_hash, 
+          u.first_name, 
+          u.last_name, 
+          r.name as role, 
+          u.phone, 
+          u.created_at, 
+          u.updated_at 
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        WHERE u.id = @id
+        LIMIT 1
       ''';
 
       final results = await conn.execute(
@@ -167,18 +182,8 @@ class Database {
 
       if (results.isEmpty) return null;
 
-      final row = results.first;
-      return User.fromMap({
-        'id': row[0],
-        'email': row[1],
-        'password_hash': row[2],
-        'first_name': row[3],
-        'last_name': row[4],
-        'role': row[5],
-        'phone': row[6],
-        'created_at': row[7],
-        'updated_at': row[8],
-      });
+      final row = results.first.toColumnMap();
+      return User.fromMap(row);
     } catch (e) {
       print('❌ getUserById error: $e');
       rethrow;
@@ -187,45 +192,58 @@ class Database {
 
   // Создать пользователя
   Future<User> createUser(User user) async {
-    try {
-      final conn = await connection;
-
-      final sql = '''
-        INSERT INTO users (email, password_hash, first_name, last_name, role, phone, created_at, updated_at)
-        VALUES (@email, @password_hash, @first_name, @last_name, @role, @phone, @created_at, @updated_at)
-        RETURNING id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at
-      ''';
-
-      final results = await conn.execute(
-        Sql.named(sql),
+    final conn = await connection;
+    return await conn.runTx((ctx) async {
+      // 1. Вставить пользователя в таблицу users и получить его ID
+      final userResult = await ctx.execute(
+        Sql.named('''
+          INSERT INTO users (login, email, password_hash, first_name, last_name, phone, created_at, updated_at, created_by, updated_by)
+          VALUES (@login, @email, @password_hash, @first_name, @last_name, @phone, @created_at, @updated_at, @created_by, @updated_by)
+          RETURNING id
+        '''),
         parameters: {
+          'login': user.email, // Используем email как логин по умолчанию
           'email': user.email,
           'password_hash': user.passwordHash,
           'first_name': user.firstName,
           'last_name': user.lastName,
-          'role': user.role,
           'phone': user.phone,
           'created_at': user.createdAt,
           'updated_at': user.updatedAt,
+          'created_by': user.id, // Предполагаем, что ID создателя передается в объекте user
+          'updated_by': user.id,
         },
       );
 
-      final row = results.first;
-      return User.fromMap({
-        'id': row[0],
-        'email': row[1],
-        'password_hash': row[2],
-        'first_name': row[3],
-        'last_name': row[4],
-        'role': row[5],
-        'phone': row[6],
-        'created_at': row[7],
-        'updated_at': row[8],
-      });
-    } catch (e) {
-      print('❌ createUser error: $e');
-      rethrow;
-    }
+      final newUserId = userResult.first[0] as int;
+
+      // 2. Найти ID роли
+      final roleResult = await ctx.execute(
+        Sql.named('SELECT id FROM roles WHERE name = @roleName'),
+        parameters: {'roleName': user.role},
+      );
+
+      if (roleResult.isEmpty) {
+        throw Exception('Role not found: ${user.role}');
+      }
+      final roleId = roleResult.first[0] as int;
+
+      // 3. Связать пользователя и роль в user_roles
+      await ctx.execute(
+        Sql.named('INSERT INTO user_roles (user_id, role_id) VALUES (@userId, @roleId)'),
+        parameters: {
+          'userId': newUserId,
+          'roleId': roleId,
+        },
+      );
+
+      // 4. Вернуть созданного пользователя со всей информацией
+      final newUser = await getUserById(newUserId);
+      if (newUser == null) {
+        throw Exception('Failed to fetch newly created user.');
+      }
+      return newUser;
+    });
   }
 
   // Обновить пользователя
@@ -238,62 +256,41 @@ class Database {
     try {
       final conn = await connection;
 
-      // Получаем текущего пользователя
-      final currentUser = await getUserById(id);
-      if (currentUser == null) return null;
-
-      // Строим динамический запрос
-      final updates = <String, dynamic>{};
       final setParts = <String>[];
+      final parameters = <String, dynamic>{'id': id};
 
       if (firstName != null) {
-        updates['first_name'] = firstName;
-        setParts.add('first_name = @first_name');
+        setParts.add('first_name = @firstName');
+        parameters['firstName'] = firstName;
       }
       if (lastName != null) {
-        updates['last_name'] = lastName;
-        setParts.add('last_name = @last_name');
+        setParts.add('last_name = @lastName');
+        parameters['lastName'] = lastName;
       }
       if (phone != null) {
-        updates['phone'] = phone;
         setParts.add('phone = @phone');
+        parameters['phone'] = phone;
       }
 
       if (setParts.isEmpty) {
-        return currentUser;
+        return getUserById(id);
       }
 
-      updates['updated_at'] = DateTime.now();
-      setParts.add('updated_at = @updated_at');
-
-      updates['id'] = id;
+      setParts.add('updated_at = @updatedAt');
+      parameters['updatedAt'] = DateTime.now();
 
       final sql = '''
         UPDATE users 
         SET ${setParts.join(', ')}
         WHERE id = @id
-        RETURNING id, email, password_hash, first_name, last_name, role, phone, created_at, updated_at
       ''';
 
-      final results = await conn.execute(
+      await conn.execute(
         Sql.named(sql),
-        parameters: updates,
+        parameters: parameters,
       );
 
-      if (results.isEmpty) return null;
-
-      final row = results.first;
-      return User.fromMap({
-        'id': row[0],
-        'email': row[1],
-        'password_hash': row[2],
-        'first_name': row[3],
-        'last_name': row[4],
-        'role': row[5],
-        'phone': row[6],
-        'created_at': row[7],
-        'updated_at': row[8],
-      });
+      return await getUserById(id);
     } catch (e) {
       print('❌ updateUser error: $e');
       rethrow;
@@ -306,9 +303,9 @@ class Database {
       final conn = await connection;
 
       final sql = '''
-        DELETE FROM users 
+        UPDATE users
+        SET archived_at = NOW()
         WHERE id = @id
-        RETURNING id
       ''';
 
       final results = await conn.execute(
@@ -318,7 +315,7 @@ class Database {
         },
       );
 
-      return results.isNotEmpty;
+      return results.affectedRows > 0;
     } catch (e) {
       print('❌ deleteUser error: $e');
       rethrow;
@@ -331,7 +328,11 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT u.* FROM users u
+          SELECT 
+            u.id, u.email, u.password_hash, u.first_name, u.last_name, r.name as role, u.phone, u.created_at, u.updated_at
+          FROM users u
+          LEFT JOIN user_roles ur ON u.id = ur.user_id
+          LEFT JOIN roles r ON ur.role_id = r.id
           INNER JOIN manager_clients mc ON u.id = mc.client_id
           WHERE mc.manager_id = @managerId
           ORDER BY u.last_name, u.first_name
@@ -394,9 +395,13 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT u.* FROM users u
+          SELECT 
+            u.id, u.email, u.password_hash, u.first_name, u.last_name, r.name as role, u.phone, u.created_at, u.updated_at
+          FROM users u
+          INNER JOIN user_roles ur ON u.id = ur.user_id
+          INNER JOIN roles r ON ur.role_id = r.id
           INNER JOIN manager_instructors mi ON u.id = mi.instructor_id
-          WHERE mi.manager_id = @managerId AND u.role = 'instructor'
+          WHERE mi.manager_id = @managerId AND r.name = 'instructor'
           ORDER BY u.last_name, u.first_name
         '''),
         parameters: {'managerId': managerId},
@@ -414,9 +419,13 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT u.* FROM users u
+          SELECT 
+            u.id, u.email, u.password_hash, u.first_name, u.last_name, r.name as role, u.phone, u.created_at, u.updated_at
+          FROM users u
+          INNER JOIN user_roles ur ON u.id = ur.user_id
+          INNER JOIN roles r ON ur.role_id = r.id
           INNER JOIN manager_trainers mt ON u.id = mt.trainer_id
-          WHERE mt.manager_id = @managerId AND u.role = 'trainer'
+          WHERE mt.manager_id = @managerId AND r.name = 'trainer'
           ORDER BY u.last_name, u.first_name
         '''),
         parameters: {'managerId': managerId},
@@ -786,59 +795,110 @@ class Database {
     try {
       final conn = await connection;
 
-      // Создаем таблицу users если не существует
+      // Создаем таблицу roles, если не существует
       await conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-          id SERIAL PRIMARY KEY,
-          email VARCHAR(255) UNIQUE NOT NULL,
-          password_hash VARCHAR(255) NOT NULL,
-          first_name VARCHAR(100) NOT NULL,
-          last_name VARCHAR(100) NOT NULL,
-          role VARCHAR(20) NOT NULL CHECK (role IN ('client', 'trainer', 'admin', 'manager')),
-          phone VARCHAR(20),
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
+        CREATE TABLE IF NOT EXISTS roles (
+            id BIGSERIAL PRIMARY KEY,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            icon VARCHAR(255),
+            company_id BIGINT DEFAULT -1,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            created_by BIGINT,
+            updated_by BIGINT,
+            archived_at TIMESTAMPTZ,
+            archived_by BIGINT
+        );
       ''');
 
-      // Создаем таблицу профилей менеджеров
+      // Создаем таблицу users, если не существует
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id BIGSERIAL PRIMARY KEY,
+            login VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE,
+            phone VARCHAR(255) UNIQUE,
+            last_name VARCHAR(255),
+            first_name VARCHAR(255),
+            middle_name VARCHAR(255),
+            gender SMALLINT,
+            age INTEGER,
+            photo_url VARCHAR(255),
+            company_id BIGINT DEFAULT -1,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            created_by BIGINT,
+            updated_by BIGINT,
+            archived_at TIMESTAMPTZ,
+            archived_by BIGINT
+        );
+      ''');
+
+      // Создаем таблицу user_roles, если не существует
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS user_roles (
+            user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            role_id BIGINT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+            assigned_at TIMESTAMPTZ DEFAULT NOW(),
+            company_id BIGINT DEFAULT -1,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            created_by BIGINT,
+            updated_by BIGINT,
+            archived_at TIMESTAMPTZ,
+            archived_by BIGINT,
+            PRIMARY KEY (user_id, role_id)
+        );
+      ''');
+
+      // Добавляем начальные роли, если их нет
+      await conn.execute('''
+        INSERT INTO roles (name, title)
+        VALUES 
+            ('client', 'Клиент'),
+            ('instructor', 'Инструктор'),
+            ('trainer', 'Тренер'),
+            ('manager', 'Менеджер'),
+            ('admin', 'Администратор')
+        ON CONFLICT (name) DO NOTHING;
+      ''');
+
+      // Остальные таблицы (с исправленными типами FK)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS manager_profiles (
-          user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
           specialization VARCHAR(255),
           work_experience INTEGER,
           is_duty BOOLEAN DEFAULT false
         )
       ''');
 
-      // Создаем таблицу связей менеджер-клиент
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS manager_clients (
-          manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          client_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          client_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           PRIMARY KEY (manager_id, client_id)
         )
       ''');
 
-      // Создаем таблицу связей менеджер-инструктор
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS manager_instructors (
-          manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          instructor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          instructor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           PRIMARY KEY (manager_id, instructor_id)
         )
       ''');
 
-      // Создаем таблицу связей менеджер-тренер
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS manager_trainers (
-          manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          trainer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          trainer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           PRIMARY KEY (manager_id, trainer_id)
         )
       ''');
 
-      // Создаем таблицу шаблонов упражнений
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS exercises_templates (
           id SERIAL PRIMARY KEY,
@@ -855,7 +915,6 @@ class Database {
         )
       ''');
 
-      // Создаем таблицу занятий (lessons)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS lessons (
           id SERIAL PRIMARY KEY,
@@ -874,7 +933,6 @@ class Database {
         )
       ''');
 
-      // Создаем таблицу целей тренировок (goals_training)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS goals_training (
           id SERIAL PRIMARY KEY,
@@ -882,7 +940,6 @@ class Database {
         )
       ''');
 
-      // Создаем таблицу шаблонов планов тренировок (training_plan_templates)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS training_plan_templates (
           id SERIAL PRIMARY KEY,
@@ -891,7 +948,6 @@ class Database {
         )
       ''');
 
-      // Создаем таблицу индивидуальных планов тренировок клиента (client_training_plans)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS client_training_plans (
           id SERIAL PRIMARY KEY,
@@ -905,7 +961,6 @@ class Database {
         )
       ''');
 
-      // Создаем таблицу расписания работы центра (work_schedules)
       await conn.execute('''
         CREATE TABLE IF NOT EXISTS work_schedules (
             id BIGSERIAL PRIMARY KEY,
