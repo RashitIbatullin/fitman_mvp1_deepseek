@@ -53,14 +53,14 @@ class ClientPreferenceController {
 
       // Get client ID from request context (assuming it's set by auth middleware)
       final user = request.context['user'] as Map<String, dynamic>?;
-      final clientId = user?['id'] as int?;
+      final clientId = user?['userId'] as int?;
 
       if (clientId == null) {
         return Response.badRequest(body: jsonEncode({'error': 'Client ID not found in token.'}));
       }
 
       final result = await connection.execute(
-        Sql.named('SELECT day_of_week, preferred_start_time, preferred_end_time FROM client_schedule_preferences WHERE client_id = @clientId ORDER BY day_of_week'),
+        Sql.named('SELECT id, client_id, day_of_week, preferred_start_time, preferred_end_time FROM client_schedule_preferences WHERE client_id = @clientId ORDER BY day_of_week'),
         parameters: {'clientId': clientId},
       );
 
