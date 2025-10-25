@@ -529,7 +529,11 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT u.* FROM users u
+          SELECT 
+            u.id, u.email, u.password_hash, u.first_name, u.last_name, r.name as role, u.phone, u.created_at, u.updated_at
+          FROM users u
+          LEFT JOIN user_roles ur ON u.id = ur.user_id
+          LEFT JOIN roles r ON ur.role_id = r.id
           INNER JOIN instructor_clients ic ON u.id = ic.client_id
           WHERE ic.instructor_id = @instructorId
           ORDER BY u.last_name, u.first_name
@@ -549,7 +553,11 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT DISTINCT t.* FROM users t 
+          SELECT DISTINCT ON (t.id)
+            t.id, t.email, t.password_hash, t.first_name, t.last_name, r.name as role, t.phone, t.created_at, t.updated_at
+          FROM users t 
+          LEFT JOIN user_roles ur ON t.id = ur.user_id
+          LEFT JOIN roles r ON ur.role_id = r.id
           INNER JOIN lessons l ON t.id = l.trainer_id 
           WHERE l.instructor_id = @instructorId
         '''),
@@ -568,9 +576,14 @@ class Database {
       final conn = await connection;
       final results = await conn.execute(
         Sql.named('''
-          SELECT u.* FROM users u 
+          SELECT
+            u.id, u.email, u.password_hash, u.first_name, u.last_name, r.name as role, u.phone, u.created_at, u.updated_at
+          FROM users u 
+          LEFT JOIN user_roles ur ON u.id = ur.user_id
+          LEFT JOIN roles r ON ur.role_id = r.id
           INNER JOIN manager_instructors mi ON u.id = mi.manager_id 
           WHERE mi.instructor_id = @instructorId
+          LIMIT 1
         '''),
         parameters: {'instructorId': instructorId},
       );
@@ -896,6 +909,14 @@ class Database {
           manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           trainer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           PRIMARY KEY (manager_id, trainer_id)
+        )
+      ''');
+
+      await conn.execute('''
+        CREATE TABLE IF NOT EXISTS instructor_clients (
+          instructor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          client_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          PRIMARY KEY (instructor_id, client_id)
         )
       ''');
 

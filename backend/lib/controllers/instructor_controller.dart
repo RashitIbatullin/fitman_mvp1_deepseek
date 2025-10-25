@@ -94,4 +94,72 @@ class InstructorController {
       );
     }
   }
+
+  // === FOR ADMINS (getting data for a specific instructor) ===
+
+  static Future<Response> getAssignedClientsForInstructor(Request request, String instructorIdStr) async {
+    try {
+      final instructorId = int.tryParse(instructorIdStr);
+      if (instructorId == null) {
+        return Response.badRequest(body: '{"error": "Invalid instructor ID"}');
+      }
+
+      final db = Database();
+      final clients = await db.getClientsForInstructor(instructorId);
+      final clientsJson = clients.map((client) => client.toJson()).toList();
+      
+      return Response.ok(
+        jsonEncode(clientsJson),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned clients for instructor: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
+
+  static Future<Response> getAssignedTrainersForInstructor(Request request, String instructorIdStr) async {
+    try {
+      final instructorId = int.tryParse(instructorIdStr);
+      if (instructorId == null) {
+        return Response.badRequest(body: '{"error": "Invalid instructor ID"}');
+      }
+
+      final db = Database();
+      final trainers = await db.getTrainersForInstructor(instructorId);
+      final trainersJson = trainers.map((trainer) => trainer.toJson()).toList();
+      
+      return Response.ok(
+        jsonEncode(trainersJson),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned trainers for instructor: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
+
+  static Future<Response> getAssignedManagerForInstructor(Request request, String instructorIdStr) async {
+    try {
+      final instructorId = int.tryParse(instructorIdStr);
+      if (instructorId == null) {
+        return Response.badRequest(body: '{"error": "Invalid instructor ID"}');
+      }
+
+      final db = Database();
+      final manager = await db.getManagerForInstructor(instructorId);
+
+      if (manager == null) {
+        return Response.notFound('{"error": "Manager not found for instructor $instructorId"}');
+      }
+
+      return Response.ok(
+        jsonEncode(manager.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned manager for instructor: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
 }

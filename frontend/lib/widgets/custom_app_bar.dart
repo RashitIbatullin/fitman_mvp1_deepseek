@@ -44,6 +44,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final bool automaticallyImplyLeading;
   final bool showLogout;
+  final bool showBackButton;
 
   const CustomAppBar({
     super.key,
@@ -52,6 +53,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.automaticallyImplyLeading = true,
     this.showLogout = true,
+    this.showBackButton = false,
   });
 
   @override
@@ -60,6 +62,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   factory CustomAppBar.client({
     String title = 'Фитнес-трекер',
     List<Widget>? additionalActions,
+    bool showBackButton = true,
   }) {
     final defaultActions = [
       AppBarAction(icon: Icons.calendar_today, label: 'Расписание', onPressed: () {}),
@@ -72,6 +75,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ...?additionalActions,
         ...defaultActions,
       ],
+      showBackButton: showBackButton,
     );
   }
 
@@ -162,8 +166,28 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       title: Text(title),
-      leading: leading,
-      automaticallyImplyLeading: automaticallyImplyLeading,
+      leading: showBackButton
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const BackButton(),
+                if (Scaffold.of(context).hasDrawer) // Only show drawer icon if a drawer is actually present
+                  Builder(
+                    builder: (BuildContext context) {
+                      return IconButton(
+                        icon: const Icon(Icons.menu),
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+                      );
+                    },
+                  ),
+              ],
+            )
+          : leading, // Fallback to original leading or null
+      automaticallyImplyLeading: !showBackButton, // Let Flutter decide if not showing explicit back button
+      leadingWidth: showBackButton && Scaffold.of(context).hasDrawer ? 100.0 : null, // Adjust width if both are present
       actions: [
         ...?actions,
         if (showLogout) _buildLogoutAction(context),

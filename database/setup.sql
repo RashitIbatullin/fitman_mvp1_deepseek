@@ -1,17 +1,25 @@
 -- Удаление старых таблиц, если они существуют, для идемпотентности скрипта
 DROP TABLE IF EXISTS
-    users,
-    roles,
-    user_roles,
-    user_settings,
-    client_profiles,
-    instructor_profiles,
-    trainer_profiles,
-    manager_profiles,
-    goals_training,
-    levels_training,
-    work_schedules,
-    client_schedule_preferences
+"user_settings",
+"manager_clients",
+"manager_instructors",
+"manager_trainers",
+"exercises_templates",
+"lessons",
+"training_plan_templates",
+"client_training_plans",
+"goals_training",
+"levels_training",
+"client_profiles",
+"instructor_profiles",
+"instructor_clients",
+"trainer_profiles",
+"manager_profiles",
+"work_schedules",
+"roles",
+"users",
+"user_roles",
+"client_schedule_preferences"
 CASCADE;
 
 -- Общие требования к таблицам:
@@ -195,6 +203,30 @@ CREATE TABLE manager_profiles (
     archived_by BIGINT REFERENCES users(id)
 );
 
+CREATE TABLE instructor_clients (
+    instructor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (instructor_id, client_id)
+);
+
+CREATE TABLE manager_clients (
+    manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (manager_id, client_id)
+);
+
+CREATE TABLE manager_trainers (
+    manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    trainer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (manager_id, trainer_id)
+);
+
+CREATE TABLE manager_instructors (
+    manager_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    instructor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (manager_id, instructor_id)
+);
+
 -- 7. Создание начальных пользователей для каждой роли
 -- Logins/emails и пароли взяты из frontend/lib/screens/login_screen.dart
 -- Хеши сгенерированы с помощью bcrypt для соответствующих паролей.
@@ -259,51 +291,15 @@ BEGIN
     INSERT INTO client_profiles (user_id, goal_training_id, level_training_id, created_by, updated_by) VALUES (client_id, 1, 1, admin_id, admin_id);
     INSERT INTO user_settings (user_id, created_by, updated_by) VALUES (client_id, admin_id, admin_id);
 
--- Создание таблицы work_schedules
-CREATE TABLE work_schedules (
-    id BIGSERIAL PRIMARY KEY,
-    day_of_week INT NOT NULL UNIQUE,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    is_day_off BOOLEAN DEFAULT false,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_by BIGINT,
-    updated_by BIGINT,
-    archived_at TIMESTAMP WITH TIME ZONE,
-    archived_by BIGINT,
-    company_id BIGINT DEFAULT -1
-);
+    -- 8. Создание связей между пользователями
+    -- Назначаем инструктора и тренера менеджеру
+    INSERT INTO manager_instructors (manager_id, instructor_id) VALUES (manager_id, instructor_id);
+    INSERT INTO manager_trainers (manager_id, trainer_id) VALUES (manager_id, trainer_id);
 
-COMMENT ON TABLE work_schedules IS 'Расписание работы центра';
+    -- Назначаем клиента менеджеру
+    INSERT INTO manager_clients (manager_id, client_id) VALUES (manager_id, client_id);
 
--- Вставка начальных данных в work_schedules
-INSERT INTO work_schedules (day_of_week, start_time, end_time, is_day_off) VALUES
-(1, '09:00', '21:00', false),
-(2, '09:00', '21:00', false),
-(3, '09:00', '21:00', false),
-(4, '09:00', '21:00', false),
-(5, '09:00', '21:00', false),
-(6, '09:00', '21:00', false),
-(7, '09:00', '21:00', false);
-
--- Создание таблицы client_schedule_preferences
-CREATE TABLE client_schedule_preferences (
-    id BIGSERIAL PRIMARY KEY,
-    client_id BIGINT NOT NULL REFERENCES users(id),
-    day_of_week INT NOT NULL,
-    preferred_start_time TIME NOT NULL,
-    preferred_end_time TIME NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_by BIGINT,
-    updated_by BIGINT,
-    archived_at TIMESTAMP WITH TIME ZONE,
-    archived_by BIGINT,
-    company_id BIGINT DEFAULT -1,
-    UNIQUE (client_id, day_of_week) -- A client can only have one preference per day
-);
-
-COMMENT ON TABLE client_schedule_preferences IS 'Предпочтения клиента по расписанию';
+    -- Назначаем клиента инструктору
+    INSERT INTO instructor_clients (instructor_id, client_id) VALUES (instructor_id, client_id);
 
 END $$;

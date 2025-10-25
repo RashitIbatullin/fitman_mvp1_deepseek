@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Провайдер для получения менеджера, назначенного инструктору
-final assignedManagerProvider = FutureProvider<User>((ref) async {
-  return ApiService.getAssignedManagerForInstructor();
+final assignedManagerProvider = FutureProvider.family<User, int>((ref, instructorId) async {
+  return ApiService.getAssignedManagerForInstructor(instructorId);
 });
 
 class MyManagerView extends ConsumerWidget {
-  const MyManagerView({super.key});
+  final int instructorId;
+  const MyManagerView({super.key, required this.instructorId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final managerAsyncValue = ref.watch(assignedManagerProvider);
+    final managerAsyncValue = ref.watch(assignedManagerProvider(instructorId));
 
     return managerAsyncValue.when(
       data: (manager) {

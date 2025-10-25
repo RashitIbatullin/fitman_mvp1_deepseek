@@ -224,10 +224,10 @@ class ApiService {
   }
 
   // Получение списка клиентов для менеджера
-  static Future<List<User>> getAssignedClients() async {
+  static Future<List<User>> getAssignedClients(int managerId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/manager/clients'),
+        Uri.parse('$baseUrl/api/managers/$managerId/clients'),
         headers: _headers,
       );
 
@@ -245,10 +245,10 @@ class ApiService {
   }
 
   // Получение списка инструкторов для менеджера
-  static Future<List<User>> getAssignedInstructors() async {
+  static Future<List<User>> getAssignedInstructors(int managerId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/manager/instructors'),
+        Uri.parse('$baseUrl/api/managers/$managerId/instructors'),
         headers: _headers,
       );
 
@@ -266,10 +266,10 @@ class ApiService {
   }
 
   // Получение списка тренеров для менеджера
-  static Future<List<User>> getAssignedTrainers() async {
+  static Future<List<User>> getAssignedTrainers(int managerId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/manager/trainers'),
+        Uri.parse('$baseUrl/api/managers/$managerId/trainers'),
         headers: _headers,
       );
 
@@ -287,10 +287,10 @@ class ApiService {
   }
 
   // Получение списка клиентов для инструктора
-  static Future<List<User>> getAssignedClientsForInstructor() async {
+  static Future<List<User>> getAssignedClientsForInstructor(int instructorId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/instructor/clients'),
+        Uri.parse('$baseUrl/api/instructors/$instructorId/clients'),
         headers: _headers,
       );
 
@@ -308,10 +308,10 @@ class ApiService {
   }
 
   // Получение списка тренеров для инструктора
-  static Future<List<User>> getAssignedTrainersForInstructor() async {
+  static Future<List<User>> getAssignedTrainersForInstructor(int instructorId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/instructor/trainers'),
+        Uri.parse('$baseUrl/api/instructors/$instructorId/trainers'),
         headers: _headers,
       );
 
@@ -329,10 +329,10 @@ class ApiService {
   }
 
   // Получение менеджера для инструктора
-  static Future<User> getAssignedManagerForInstructor() async {
+  static Future<User> getAssignedManagerForInstructor(int instructorId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/instructor/manager'),
+        Uri.parse('$baseUrl/api/instructors/$instructorId/manager'),
         headers: _headers,
       );
 

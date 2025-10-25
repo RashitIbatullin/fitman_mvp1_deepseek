@@ -7,6 +7,11 @@ import 'create_user_screen.dart';
 import 'assign_clients_screen.dart';
 import 'assign_instructors_screen.dart';
 import 'assign_trainers_screen.dart';
+import '../client_dashboard.dart';
+import '../instructor_dashboard.dart';
+import '../manager_dashboard.dart';
+import '../trainer_dashboard.dart';
+import '../unknown_role_screen.dart';
 
 class UsersListScreen extends ConsumerStatefulWidget {
   final String? initialFilter;
@@ -97,12 +102,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar.admin(
-        title: 'Управление пользователями',
-        onTabSelected: (index) {},
-      ),
-      body: Column(
+    return Column(
         children: [
           // Фильтры
           Padding(
@@ -201,7 +201,28 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                                     ],
                                   ),
                                   onTap: () {
-                                    // Навигация к редактированию пользователя
+                                    Widget page;
+                                    switch (user.role) {
+                                      case 'manager':
+                                        page = ManagerDashboard(manager: user);
+                                        break;
+                                      case 'trainer':
+                                        page = TrainerDashboard(trainer: user);
+                                        break;
+                                      case 'instructor':
+                                        page = InstructorDashboard(instructor: user);
+                                        break;
+                                      case 'client':
+                                        page = ClientDashboard(client: user);
+                                        break;
+                                      default:
+                                        // Для админа или других ролей можно открыть экран редактирования или ничего не делать
+                                        return; 
+                                    }
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => page),
+                                    );
                                   },
                                 ),
                               );
@@ -209,18 +230,6 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                           ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateUserScreen(userRole: 'client'),
-            ),
-          ).then((_) => _loadUsers());
-        },
-        child: const Icon(Icons.person_add),
-      ),
-    );
+      );
   }
 }

@@ -234,4 +234,69 @@ class ManagerController {
       return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
     }
   }
+
+  // === FOR ADMINS (getting data for a specific manager) ===
+
+  static Future<Response> getAssignedClientsForManager(Request request, String managerIdStr) async {
+    try {
+      final managerId = int.tryParse(managerIdStr);
+      if (managerId == null) {
+        return Response.badRequest(body: '{"error": "Invalid manager ID"}');
+      }
+
+      final db = Database();
+      final clients = await db.getClientsForManager(managerId);
+      final clientsJson = clients.map((client) => client.toJson()).toList();
+      
+      return Response.ok(
+        jsonEncode(clientsJson),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned clients for manager: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
+
+  static Future<Response> getAssignedInstructorsForManager(Request request, String managerIdStr) async {
+    try {
+      final managerId = int.tryParse(managerIdStr);
+      if (managerId == null) {
+        return Response.badRequest(body: '{"error": "Invalid manager ID"}');
+      }
+
+      final db = Database();
+      final instructors = await db.getInstructorsForManager(managerId);
+      final instructorsJson = instructors.map((instructor) => instructor.toJson()).toList();
+      
+      return Response.ok(
+        jsonEncode(instructorsJson),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned instructors for manager: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
+
+  static Future<Response> getAssignedTrainersForManager(Request request, String managerIdStr) async {
+    try {
+      final managerId = int.tryParse(managerIdStr);
+      if (managerId == null) {
+        return Response.badRequest(body: '{"error": "Invalid manager ID"}');
+      }
+
+      final db = Database();
+      final trainers = await db.getTrainersForManager(managerId);
+      final trainersJson = trainers.map((trainer) => trainer.toJson()).toList();
+      
+      return Response.ok(
+        jsonEncode(trainersJson),
+        headers: {'Content-Type': 'application/json'},
+      );
+    } catch (e) {
+      print('Error getting assigned trainers for manager: $e');
+      return Response.internalServerError(body: '{"error": "An unexpected error occurred"}');
+    }
+  }
 }

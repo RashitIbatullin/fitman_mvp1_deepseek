@@ -119,10 +119,20 @@ final Router router = Router()
   ..post('/api/managers/<id>/trainers', (Request request, String id) => _adminHandler((Request req) => ManagerController.assignTrainers(req, id))(request))
   ..get('/api/managers/<id>/trainers/ids', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedTrainerIds(req, id))(request))
 
+  // Routes for admins to get data for a specific manager
+  ..get('/api/managers/<id>/clients', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedClientsForManager(req, id))(request))
+  ..get('/api/managers/<id>/instructors', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedInstructorsForManager(req, id))(request))
+  ..get('/api/managers/<id>/trainers', (Request request, String id) => _adminHandler((Request req) => ManagerController.getAssignedTrainersForManager(req, id))(request))
+
 // Instructor routes
   ..get('/api/instructor/clients', (Request request) => _instructorHandler(InstructorController.getAssignedClients)(request))
   ..get('/api/instructor/trainers', (Request request) => _instructorHandler(InstructorController.getAssignedTrainers)(request))
   ..get('/api/instructor/manager', (Request request) => _instructorHandler(InstructorController.getAssignedManager)(request))
+
+  // Routes for admins to get data for a specific instructor
+  ..get('/api/instructors/<id>/clients', (Request request, String id) => _adminHandler((Request req) => InstructorController.getAssignedClientsForInstructor(req, id))(request))
+  ..get('/api/instructors/<id>/trainers', (Request request, String id) => _adminHandler((Request req) => InstructorController.getAssignedTrainersForInstructor(req, id))(request))
+  ..get('/api/instructors/<id>/manager', (Request request, String id) => _adminHandler((Request req) => InstructorController.getAssignedManagerForInstructor(req, id))(request))
 
 // Dashboard routes
   ..get('/api/dashboard/client', (Request request) => _protectedHandler(DashboardController.getClientDashboardData)(request))

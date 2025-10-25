@@ -1,14 +1,16 @@
+import 'package:fitman_app/models/user_front.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_app_bar.dart';
 
 class TrainerDashboard extends ConsumerWidget {
-  const TrainerDashboard({super.key});
+  final User? trainer;
+  const TrainerDashboard({super.key, this.trainer});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider).value;
+    final user = trainer ?? ref.watch(authProvider).value;
 
     return Scaffold(
       appBar: CustomAppBar.trainer(

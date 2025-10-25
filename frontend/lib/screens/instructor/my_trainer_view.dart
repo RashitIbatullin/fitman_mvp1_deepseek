@@ -3,17 +3,18 @@ import 'package:fitman_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Провайдер для получения всех тренеров, назначенных инструктору
-final assignedTrainersProvider = FutureProvider<List<User>>((ref) async {
-  return ApiService.getAssignedTrainersForInstructor();
+// Провайдер для получения тренеров для конкретного инструктора
+final assignedTrainersProvider = FutureProvider.family<List<User>, int>((ref, instructorId) async {
+  return ApiService.getAssignedTrainersForInstructor(instructorId);
 });
 
 class MyTrainerView extends ConsumerWidget {
-  const MyTrainerView({super.key});
+  final int instructorId;
+  const MyTrainerView({super.key, required this.instructorId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trainersAsyncValue = ref.watch(assignedTrainersProvider);
+    final trainersAsyncValue = ref.watch(assignedTrainersProvider(instructorId));
 
     return trainersAsyncValue.when(
       data: (trainers) {

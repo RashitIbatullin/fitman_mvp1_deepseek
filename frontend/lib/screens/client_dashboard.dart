@@ -41,6 +41,7 @@ class ClientDashboard extends ConsumerWidget {
             },
           ),
         ],
+        showBackButton: client != null,
       ),
       drawer: Drawer(
         child: ListView(

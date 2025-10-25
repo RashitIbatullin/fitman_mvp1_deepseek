@@ -5,19 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../admin/assign_clients_screen.dart';
 
-// Провайдер для получения всех клиентов, назначенных менеджеру
-final assignedClientsProvider = FutureProvider<List<User>>((ref) async {
-  // Здесь мы предполагаем, что ApiService может получить клиентов для текущего менеджера
-  // В реальном приложении может потребоваться передать ID менеджера
-  return ApiService.getAssignedClients();
+// Провайдер для получения клиентов для конкретного менеджера
+final assignedClientsProvider = FutureProvider.family<List<User>, int>((ref, managerId) async {
+  return ApiService.getAssignedClients(managerId);
 });
 
 class ClientsView extends ConsumerWidget {
-  const ClientsView({super.key});
+  final int managerId;
+  const ClientsView({super.key, required this.managerId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final clientsAsyncValue = ref.watch(assignedClientsProvider);
+    final clientsAsyncValue = ref.watch(assignedClientsProvider(managerId));
 
     return clientsAsyncValue.when(
       data: (clients) {

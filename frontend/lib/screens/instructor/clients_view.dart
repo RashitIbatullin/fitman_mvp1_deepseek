@@ -5,16 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Провайдер для получения всех клиентов, назначенных инструктору
-final assignedClientsProvider = FutureProvider<List<User>>((ref) async {
-  return ApiService.getAssignedClientsForInstructor();
+final assignedClientsProvider = FutureProvider.family<List<User>, int>((ref, instructorId) async {
+  return ApiService.getAssignedClientsForInstructor(instructorId);
 });
 
 class ClientsView extends ConsumerWidget {
-  const ClientsView({super.key});
+  final int instructorId;
+  const ClientsView({super.key, required this.instructorId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final clientsAsyncValue = ref.watch(assignedClientsProvider);
+    final clientsAsyncValue = ref.watch(assignedClientsProvider(instructorId));
 
     return clientsAsyncValue.when(
       data: (clients) {
